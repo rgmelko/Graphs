@@ -32,7 +32,71 @@ int main()
     WriteGraphsToFile( linearGraphs, filename);
 }
 
-void WriteGraphsToFile( vector< graph > & graphList, const std::string file)
+graph::graph()
+{
+    NumberSites = 0;
+    NumberBonds = 0;
+    LatticeConstant = 1;
+    Identifier = 0;
+    RealSpaceCoordinates.clear();
+    SubgraphList.clear();
+    AdjacencyList.clear();
+};
+
+graph::graph(vector< pair<int, int> > & AdjList, int IdentNumber, int order, int edgeCount, int LattConst, vector< int > & subgraphs )
+{
+    AdjacencyList = AdjList;
+    Identifier = IdentNumber;
+    NumberSites = order;
+    NumberBonds = edgeCount;
+    LatticeConstant = LattConst;
+    SubgraphList = subgraphs;
+    RealSpaceCoordinates.clear();
+}
+
+graph::graph(vector< pair<int, int> > & AdjList, int IdentNumber, int order, int edgeCount, int LattConst, vector< int > & subgraphs, vector< vector< pair<int,int> > > embeddings )
+{
+    AdjacencyList = AdjList;
+    Identifier = IdentNumber;
+    NumberSites = order;
+    NumberBonds = edgeCount;
+    LatticeConstant = LattConst;
+    SubgraphList = subgraphs;
+    RealSpaceCoordinates = embeddings;
+}
+
+graph& graph::operator=( const graph & other)
+{
+    this->NumberBonds = other.NumberBonds;
+    this->NumberSites = other.NumberSites;
+    this->LatticeConstant = other.LatticeConstant;
+    this->AdjacencyList = other.AdjacencyList;
+    this->SubgraphList = other.SubgraphList;
+    return *this;
+};
+
+bool graph::operator==( const graph & other)
+{
+    return (( this->NumberBonds == other.NumberBonds) &&
+           ( this->NumberSites == other.NumberSites) &&
+           ( this->LatticeConstant == other.LatticeConstant) &&
+           ( this->AdjacencyList == other.AdjacencyList) );
+};
+
+graph graph::GetGraphFromFile(const int IdNumber, const string & file)
+{
+    vector< graph > fileGraphs;
+    ReadGraphsFromFile( fileGraphs, file);
+    for( unsigned int currentGraph = 0; currentGraph < fileGraphs.size(); currentGraph++)
+    {
+        if ( fileGraphs.at(currentGraph).Identifier == IdNumber)
+        {
+            return fileGraphs.at(currentGraph);
+        }
+    }
+}
+
+void WriteGraphsToFile( vector< graph > & graphList, std::string file)
 {
     ofstream output(file.c_str());
     for( unsigned int currentGraph = 0; currentGraph < graphList.size(); currentGraph++)
@@ -56,7 +120,7 @@ void WriteGraphsToFile( vector< graph > & graphList, const std::string file)
     }
 }
 
-void ReadGraphsFromFile( vector< graph > & graphList, string & file)
+void ReadGraphsFromFile( vector< graph > & graphList, const string & file)
 {
     ifstream input(file.c_str());
     vector< string > rawLines;

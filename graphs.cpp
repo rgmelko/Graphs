@@ -37,9 +37,9 @@ void WriteGraphsToFile( vector< graph > & graphList, const std::string file)
     ofstream output(file.c_str());
     for( unsigned int currentGraph = 0; currentGraph < graphList.size(); currentGraph++)
     {
-        output<<graphList[currentGraph].Identifier<<endl;
-        output<<graphList[currentGraph].NumberSites<<endl;
-        output<<graphList[currentGraph].NumberBonds<<endl;
+        output<<graphList[currentGraph].Identifier<<" ";
+        output<<graphList[currentGraph].NumberSites<<" ";
+        output<<graphList[currentGraph].NumberBonds<<" ";
         output<<graphList[currentGraph].LatticeConstant<<endl;
 
         for (unsigned int currentBond = 0; currentBond < graphList[currentGraph].AdjacencyList.size(); currentBond++)

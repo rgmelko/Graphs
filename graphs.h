@@ -1,3 +1,6 @@
+#include <fstream>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -13,10 +16,11 @@ class graph
         int LatticeConstant;
         int NumberSites;
         int NumberBonds;
+        int Identifier;
         vector< int > SubgraphList;
-        vector< vector< tuple<int, int, int> > > RealSpaceCoordinates;
+        vector< vector< pair<int, int> > > RealSpaceCoordinates;
 
 };
 
 void ReadGraphsFromFile(vector< graph > & graphList, string & file);
-void WriteGraphsToFile(vector< graph > & graphList, string & file);
+void WriteGraphsToFile(vector< graph > & graphList, string file);

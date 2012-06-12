@@ -12,6 +12,7 @@ int main()
         linearGraphs.resize(currentIndex);
         linearGraphs[currentIndex - 1].NumberSites = currentOrder;
         linearGraphs[currentIndex - 1].NumberBonds = currentOrder - 1;
+	linearGraphs[currentIndex - 1].LatticeConstant = 1;
         linearGraphs[currentIndex - 1].AdjacencyList.resize(currentOrder - 1);
         if (currentOrder > 1)
         {

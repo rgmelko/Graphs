@@ -1,10 +1,10 @@
 #include "graphs.h"
 
 
-int main()
+/*int main()
 {
     int maxOrder = 20;
-    vector< graph > linearGraphs;
+    vector< Graph > linearGraphs;
     int currentIndex = 0;
     for( int currentOrder = 1; currentOrder <= maxOrder; currentOrder++)
     {
@@ -28,64 +28,43 @@ int main()
         }
     }
 
-    const std::string filename ("lineargraphs.dat");
+    const std::string filename ("linearGraphs.dat");
     WriteGraphsToFile( linearGraphs, filename);
-}
+}*/
 
-graph::graph()
+Graph::Graph()
 {
-    NumberSites = 0;
-    NumberBonds = 0;
+    Order = 0;
     LatticeConstant = 1;
     Identifier = 0;
-    RealSpaceCoordinates.clear();
     SubgraphList.clear();
-    AdjacencyList.clear();
 };
 
-graph::graph(vector< pair<int, int> > & AdjList, int IdentNumber, int order, int edgeCount, int LattConst, vector< int > & subgraphs )
+Graph::Graph(int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
 {
-    AdjacencyList = AdjList;
     Identifier = IdentNumber;
-    NumberSites = order;
-    NumberBonds = edgeCount;
+    Order = order;
     LatticeConstant = LattConst;
     SubgraphList = subgraphs;
-    RealSpaceCoordinates.clear();
 }
 
-graph::graph(vector< pair<int, int> > & AdjList, int IdentNumber, int order, int edgeCount, int LattConst, vector< int > & subgraphs, vector< vector< pair<int,int> > > embeddings )
+Graph& Graph::operator=( const Graph & other)
 {
-    AdjacencyList = AdjList;
-    Identifier = IdentNumber;
-    NumberSites = order;
-    NumberBonds = edgeCount;
-    LatticeConstant = LattConst;
-    SubgraphList = subgraphs;
-    RealSpaceCoordinates = embeddings;
-}
-
-graph& graph::operator=( const graph & other)
-{
-    this->NumberBonds = other.NumberBonds;
-    this->NumberSites = other.NumberSites;
+    this->Order = other.Order;
     this->LatticeConstant = other.LatticeConstant;
-    this->AdjacencyList = other.AdjacencyList;
     this->SubgraphList = other.SubgraphList;
     return *this;
 };
 
-bool graph::operator==( const graph & other)
+bool Graph::operator==( const Graph & other)
 {
-    return (( this->NumberBonds == other.NumberBonds) &&
-           ( this->NumberSites == other.NumberSites) &&
-           ( this->LatticeConstant == other.LatticeConstant) &&
-           ( this->AdjacencyList == other.AdjacencyList) );
+    return (( this->Order == other.Order) &&
+           ( this->LatticeConstant == other.LatticeConstant) );
 };
 
-graph graph::GetGraphFromFile(const int IdNumber, const string & file)
+/*Graph Graph::GetGraphFromFile(const int IdNumber, const string & file)
 {
-    vector< graph > fileGraphs;
+    vector< Graph > fileGraphs;
     ReadGraphsFromFile( fileGraphs, file);
     for( unsigned int currentGraph = 0; currentGraph < fileGraphs.size(); currentGraph++)
     {
@@ -94,33 +73,190 @@ graph graph::GetGraphFromFile(const int IdNumber, const string & file)
             return fileGraphs.at(currentGraph);
         }
     }
+}*/
+
+SiteGraph::SiteGraph()
+{
+    Order = 0;
+    LatticeConstant = 1;
+    Identifier = 0;
+    Sites.clear();
+    SubgraphList.clear();
 }
 
-void WriteGraphsToFile( vector< graph > & graphList, std::string file)
+SiteGraph::SiteGraph(vector<pair <int, int> > & siteList, int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
+{
+    Identifier = IdentNumber;
+    Order = order;
+    LatticeConstant = LattConst;
+    SubgraphList = subgraphs;
+    Sites = siteList;
+}
+
+SiteGraph& SiteGraph::operator=( const SiteGraph & other)
+{
+    this->Order = other.Order;
+    this->LatticeConstant = other.LatticeConstant;
+    this->SubgraphList = other.SubgraphList;
+    this->Sites = other.Sites;
+    return *this;
+}
+
+bool SiteGraph::operator==( const SiteGraph & other)
+{
+    return ( (this->Order == other.Order) &&
+             (this->LatticeConstant == other.LatticeConstant) &&
+             ((this->Sites == other.Sites) || (*this.Isomorphic(other))));
+}
+
+void SiteGraph::AddSite(int xIndex, int yIndex)
+{
+    unsigned int InsertCounter = 0;
+    while ( this->Sites.at(InsertCounter).first <= xIndex && this->Sites.at(InsertCounter).second <= yIndex && InsertCounter< this->Sites.size())
+    {
+        InsertCounter++;
+    }
+    this->Sites.insert( this->Sites.begin() + InsertCounter, make_pair(xIndex, yIndex));
+}
+
+void SiteGraph::RemoveSite(int xIndex, int yIndex)
+{
+    unsigned int EraseCounter = 0;
+    while ( this->Sites.at(EraseCounter).first <= xIndex && this->Sites.at(EraseCounter).second <= yIndex && EraseCounter< this->Sites.size())
+    {
+        EraseCounter++;
+    }
+    this->Sites.erase( this->Sites.begin() + EraseCounter);
+}
+
+bool SiteGraph::CheckForSite(int xIndex, int yIndex)
+{
+    pair<int, int> TempSite = make_pair(xIndex, yIndex); 
+
+    return binary_search(this->Sites.begin(), this->Sites.end(), TempSite);
+}
+
+int SiteGraph::SiteDegree(int xIndex, int yIndex)
+{
+    int DegreeCounter = 0;
+    for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++)
+    {
+        if( ( (this->Sites.at(CurrentSite).first == xIndex - 1 || 
+               this->Sites.at(CurrentSite).first == xIndex + 1) && 
+               this->Sites.at(CurrentSite).second == yIndex) ||
+            ( (this->Sites.at(CurrentSite).second == yIndex - 1 || 
+               this->Sites.at(CurrentSite).second == yIndex + 1) &&
+               this->Sites.at(CurrentSite).first == xIndex) )
+         {
+            DegreeCounter++;
+         }
+    }
+    return DegreeCounter;
+}
+
+BondGraph::BondGraph()
+{
+    Order = 0;
+    LatticeConstant = 1;
+    Identifier = 0;
+    Bonds.clear();
+    SubgraphList.clear();
+}
+
+BondGraph::BondGraph(vector< pair< pair <int, int>, pair<int, int> > > & bondList, int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
+{
+    Identifier = IdentNumber;
+    Order = order;
+    LatticeConstant = LattConst;
+    SubgraphList = subgraphs;
+    Bonds = bondList;
+}
+
+BondGraph& BondGraph::operator=( const BondGraph & other)
+{
+    this->Order = other.Order;
+    this->LatticeConstant = other.LatticeConstant;
+    this->SubgraphList = other.SubgraphList;
+    this->Bonds = other.Bonds;
+    return *this;
+}
+
+bool BondGraph::operator==( const BondGraph & other)
+{
+    return ( (this->Order == other.Order) &&
+             (this->LatticeConstant == other.LatticeConstant) &&
+             ((this->Bonds == other.Bonds) || (*this.Isomorphic(other))));
+}
+
+void BondGraph::AddBond(pair<int, int> firstSite, pair<int, int> secondSite )
+{
+    unsigned int InsertCounter = 0;
+    while ( this->Bonds.at(InsertCounter).first <= firstSite && this->Bonds.at(InsertCounter).second <= secondSite && InsertCounter< this->Bonds.size())
+    {
+        InsertCounter++;
+    }
+    this->Bonds.insert( this->Bonds.begin() + InsertCounter, make_pair(firstSite, secondSite));
+}
+
+void BondGraph::RemoveBond( pair<int, int> firstSite, pair<int, int> secondSite)
+{
+    unsigned int EraseCounter = 0;
+    while ( this->Bonds.at(EraseCounter).first <= firstSite && this->Bonds.at(EraseCounter).second <= secondSite && EraseCounter< this->Bonds.size())
+    {
+        EraseCounter++;
+    }
+    this->Bonds.erase( this->Bonds.begin() + EraseCounter);
+}
+
+bool BondGraph::CheckForBond(pair<int,int> firstSite, pair<int,int> secondSite)
+{
+    pair<pair<int, int>, pair<int, int> > TempBond = make_pair(firstSite, secondSite); 
+
+    return binary_search(this->Bonds.begin(), this->Bonds.end(), TempBond);
+}
+
+int BondGraph::BondCount(pair<int,int> FirstSite, pair<int,int> SecondSite)
+{
+    unsigned int BondCounter = 0;
+    for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
+    {
+
+        if( ( this->Bonds.at(CurrentBond).first == FirstSite  ||   
+              this->Bonds.at(CurrentBond).first == SecondSite) ||
+             (this->Bonds.at(CurrentBond).second == SecondSite || 
+              this->Bonds.at(CurrentBond).second == FirstSite) )
+         {
+            BondCounter++;
+         }
+    }
+    return BondCounter;
+}
+/*
+void WriteGraphsToFile( vector< Graph > & GraphList, std::string file)
 {
     ofstream output(file.c_str());
-    for( unsigned int currentGraph = 0; currentGraph < graphList.size(); currentGraph++)
+    for( unsigned int currentGraph = 0; currentGraph < GraphList.size(); currentGraph++)
     {
-        output<<graphList[currentGraph].Identifier<<endl;
-        output<<graphList[currentGraph].NumberSites<<endl;
-        output<<graphList[currentGraph].NumberBonds<<endl;
-        output<<graphList[currentGraph].LatticeConstant<<endl;
+        output<<GraphList[currentGraph].Identifier<<endl;
+        output<<GraphList[currentGraph].NumberSites<<endl;
+        output<<GraphList[currentGraph].NumberBonds<<endl;
+        output<<GraphList[currentGraph].LatticeConstant<<endl;
 
-        for (unsigned int currentBond = 0; currentBond < graphList[currentGraph].AdjacencyList.size(); currentBond++)
+        for (unsigned int currentBond = 0; currentBond < GraphList[currentGraph].AdjacencyList.size(); currentBond++)
         {
-            output<<"("<<graphList[currentGraph].AdjacencyList[currentBond].first<<","<<graphList[currentGraph].AdjacencyList[currentBond].second<<")";
+            output<<"("<<GraphList[currentGraph].AdjacencyList[currentBond].first<<","<<GraphList[currentGraph].AdjacencyList[currentBond].second<<")";
         }
         output<<endl;
 
-        for (unsigned int currentSubgraph = 0; currentSubgraph < graphList[currentGraph].SubgraphList.size(); currentSubgraph++)
+        for (unsigned int currentSubgraph = 0; currentSubgraph < GraphList[currentGraph].SubgraphList.size(); currentSubgraph++)
         {
-            output<<"("<<graphList[currentGraph].SubgraphList[currentSubgraph]<<")";
+            output<<"("<<GraphList[currentGraph].SubgraphList[currentSubgraph]<<")";
         }
         output<<endl;
     }
 }
 
-void ReadGraphsFromFile( vector< graph > & graphList, const string & file)
+void ReadGraphsFromFile( vector< Graph > & GraphList, const string & file)
 {
     ifstream input(file.c_str());
     vector< string > rawLines;
@@ -138,7 +274,7 @@ void ReadGraphsFromFile( vector< graph > & graphList, const string & file)
     for (unsigned int currentLine = 0; currentLine < rawLines.size(); currentLine++)
     {
         currentGraph = currentLine/memberCount;
-        graph tempGraph;
+        Graph tempGraph;
         unsigned int currentChar = 0;
         string currentNumber;
         switch ( currentLine % memberCount )
@@ -205,11 +341,11 @@ void ReadGraphsFromFile( vector< graph > & graphList, const string & file)
                 break;
         }
             
-        graphList.push_back(tempGraph);
+        GraphList.push_back(tempGraph);
         
     }
 }
-
+*/
 /*
 std::string getFileContents(const std::string& filename)
 {

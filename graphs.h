@@ -5,30 +5,61 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <algorithm>
 
 using namespace std;
 
-class graph 
+class Graph 
 {
 
     public :
-        vector< pair< int, int > > AdjacencyList;
+        //vector< pair< int, int > > AdjacencyList;
         int LatticeConstant;
-        int NumberSites;
-        int NumberBonds;
+        int Order;
         int Identifier;
         vector< int > SubgraphList;
-        vector< vector< pair<int, int> > > RealSpaceCoordinates;
 
-        graph();
-        graph(vector< pair<int, int> > & , int, int, int, int, vector< int > & );
-        graph(vector< pair<int, int> > & , int, int, int, int, vector< int > &, vector< vector< pair<int, int> > > );
+        Graph();
+        Graph(int, int, int, vector< int > & );
 
-        graph& operator=(const graph & other);
-        bool operator==(const graph & other);
+        Graph& operator=(const Graph & other);
+        bool operator==(const Graph & other);
 
-        graph GetGraphFromFile(const int Identifier, const string & file);
+//        Graph GetGraphFromFile(const int Identifier, const string & file);
 };
 
-void ReadGraphsFromFile(vector< graph > & graphList, const string & file);
-void WriteGraphsToFile(vector< graph > & graphList, string file);
+class SiteGraph : public Graph
+{
+    private :
+        vector< pair<int, int> > Sites;
+
+    public :       
+        SiteGraph();
+        SiteGraph(vector< pair<int, int> > & , int, int, int, vector< int > & );
+        void AddSite(int xIndex, int yIndex);
+        void RemoveSite(int xIndex, int yIndex);
+        bool CheckForSite(int xIndex, int yIndex);
+        int SiteDegree(int xIndex, int yIndex);
+        bool operator==(const SiteGraph & other);
+        SiteGraph & operator=(const SiteGraph & other);
+
+};
+
+class BondGraph : public Graph
+{
+    private :
+        vector< pair< pair<int, int>, pair<int, int> > > Bonds;
+
+    public :
+        BondGraph();
+        BondGraph(vector< pair< pair<int, int>, pair<int,int> > > & , int, int, int, vector< int > & );
+        void AddBond(pair<int , int> , pair< int, int> );
+        void RemoveBond(pair<int , int> , pair< int, int> );
+        bool CheckForBond(pair<int , int> , pair< int, int> );
+        int BondCount(pair<int , int> , pair< int, int> );
+        bool operator==(const BondGraph & other);
+        BondGraph & operator=(const BondGraph & other);
+};
+
+//void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
+//void WriteGraphsToFile(vector< Graph > & GraphList, string file);

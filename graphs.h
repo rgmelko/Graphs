@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -60,6 +61,16 @@ class BondGraph : public Graph
         bool operator==(const BondGraph & other);
         BondGraph & operator=(const BondGraph & other);
 };
+
+class Dihedral
+{
+    public :
+        int element;
+        Dihedral();
+        Dihedral(int);
+        void operator() (pair<int,int>);
+        void operator() (pair< pair<int,int>, pair<int,int> >);
+} Transform;
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
 //void WriteGraphsToFile(vector< Graph > & GraphList, string file);

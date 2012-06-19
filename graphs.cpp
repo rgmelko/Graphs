@@ -1,36 +1,9 @@
 #include "graphs.h"
 
-
-/*int main()
+int main()
 {
-    int maxOrder = 20;
-    vector< Graph > linearGraphs;
-    int currentIndex = 0;
-    for( int currentOrder = 1; currentOrder <= maxOrder; currentOrder++)
-    {
-        currentIndex++;
-        linearGraphs.resize(currentIndex);
-        linearGraphs[currentIndex - 1].NumberSites = currentOrder;
-        linearGraphs[currentIndex - 1].NumberBonds = currentOrder - 1;
-        linearGraphs[currentIndex - 1].AdjacencyList.resize(currentOrder - 1);
-        if (currentOrder > 1)
-        {
-            for ( int currentSite = 0; currentSite < currentOrder - 1; currentSite++)
-            {
-            
-                linearGraphs.at(currentIndex - 1).AdjacencyList.at(currentSite) = make_pair(currentSite, currentSite + 1);
-            }
-        }
-        linearGraphs[currentIndex - 1].Identifier = currentOrder - 1;
-        for ( int currentGraph = 0; currentGraph < currentOrder; currentGraph++)
-        {
-            linearGraphs[currentIndex - 1].SubgraphList.push_back(currentGraph);
-        }
-    }
-
-    const std::string filename ("linearGraphs.dat");
-    WriteGraphsToFile( linearGraphs, filename);
-}*/
+    return 0;
+}
 
 Graph::Graph()
 {
@@ -102,13 +75,6 @@ SiteGraph& SiteGraph::operator=( const SiteGraph & other)
     return *this;
 }
 
-bool SiteGraph::operator==( const SiteGraph & other)
-{
-    return ( (this->Order == other.Order) &&
-             (this->LatticeConstant == other.LatticeConstant) &&
-             ((this->Sites == other.Sites) || (*this.Isomorphic(other))));
-}
-
 void SiteGraph::AddSite(int xIndex, int yIndex)
 {
     unsigned int InsertCounter = 0;
@@ -134,6 +100,150 @@ bool SiteGraph::CheckForSite(int xIndex, int yIndex)
     pair<int, int> TempSite = make_pair(xIndex, yIndex); 
 
     return binary_search(this->Sites.begin(), this->Sites.end(), TempSite);
+}
+
+Dihedral::Dihedral()
+{
+    element = 0;
+};
+
+Dihedral::Dihedral(int factor)
+{
+    element = factor;
+};
+
+void Dihedral::operator()(pair<int, int> Coordinates)
+{
+    int TempFirst;
+    int TempSecond;
+    switch( this->element )
+    {
+        case 0 :
+            break;
+        case 1 :
+            TempFirst = Coordinates.first;
+            Coordinates.first = -Coordinates.second;
+            Coordinates.second = TempFirst;
+            break;
+        case 2 : 
+            Coordinates.first = -Coordinates.first;
+            Coordinates.second = -Coordinates.second;
+            break;
+        case 3 :
+            TempSecond = Coordinates.second;
+            Coordinates.second = -Coordinates.first;
+            Coordinates.first = TempSecond;
+            break;
+        case 4 : 
+            Coordinates.first = -Coordinates.first;
+            break;
+        case 5 :
+            Coordinates.second = -Coordinates.second;
+            break;
+        case 6 :
+            TempFirst = -Coordinates.first;
+            TempSecond = -Coordinates.second;
+            Coordinates.first = TempSecond;
+            Coordinates.second = TempFirst;
+            break;
+        case 7 : 
+            TempFirst = Coordinates.first;
+            TempSecond = Coordinates.second;
+            Coordinates.first = TempSecond;
+            Coordinates.second = TempFirst;
+            break;
+    }
+}
+
+void Dihedral::operator()(pair< pair<int, int>, pair<int,int> > Coordinates)
+{
+    int TempFirst;
+    int TempSecond;
+    
+    switch( this->element )
+    {
+        case 0 :
+            break;
+        case 1 :
+            TempFirst = Coordinates.first.first;
+            Coordinates.first.first = -Coordinates.first.second;
+            Coordinates.first.second = TempFirst;
+            TempFirst = Coordinates.second.first;
+            Coordinates.second.first = -Coordinates.second.second;
+            Coordinates.second.second = TempFirst;
+            break;
+        case 2 : 
+            Coordinates.first.first = -Coordinates.first.first;
+            Coordinates.first.second = -Coordinates.first.second;
+            Coordinates.second.first = -Coordinates.second.first;
+            Coordinates.second.second = -Coordinates.second.second;
+            break;
+        case 3 :
+            TempSecond = Coordinates.first.second;
+            Coordinates.first.second = -Coordinates.first.first;
+            Coordinates.first.first = TempSecond;
+            TempSecond = Coordinates.second.second;
+            Coordinates.second.second = -Coordinates.second.first;
+            Coordinates.second.first = TempSecond;
+            break;
+        case 4 : 
+            Coordinates.first.first = -Coordinates.first.first;
+            Coordinates.second.first = -Coordinates.second.first;
+            break;
+        case 5 :
+            Coordinates.first.second = -Coordinates.first.second;
+            Coordinates.second.second = -Coordinates.second.second;
+            break;
+        case 6 :
+            TempFirst = -Coordinates.first.first;
+            TempSecond = -Coordinates.first.second;
+            Coordinates.first.first = TempSecond;
+            Coordinates.first.second = TempFirst;
+            TempFirst = -Coordinates.second.first;
+            TempSecond = -Coordinates.second.second;
+            Coordinates.second.first = TempSecond;
+            Coordinates.second.second = TempFirst;
+            break;
+        case 7 : 
+            TempFirst = Coordinates.first.first;
+            TempSecond = Coordinates.first.second;
+            Coordinates.first.first = TempSecond;
+            Coordinates.first.second = TempFirst;
+            TempFirst = Coordinates.second.first;
+            TempSecond = Coordinates.second.second;
+            Coordinates.second.first = TempSecond;
+            Coordinates.second.second = TempFirst;
+            break;
+    }
+}
+
+bool SiteGraph::operator==(const SiteGraph & other)
+{
+    if( ( other.LatticeConstant == this->LatticeConstant) &&
+        ( other.Order == this->Order) )
+    {
+        for( int currentFactor = 0; currentFactor < 8; currentFactor++)
+        {
+            vector<pair<int,int> > SitesCopy = other.Sites;
+            Dihedral Transform(currentFactor);
+            for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
+            sort(SitesCopy.begin(), SitesCopy.end());
+            pair<int,int> shift = make_pair(-SitesCopy.front().first, -SitesCopy.front().second);
+            for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
+            {
+                SitesCopy.at(CurrentSite) = make_pair(SitesCopy.at(CurrentSite).first + shift.first, SitesCopy.at(CurrentSite).second + shift.second);
+            }
+            if (SitesCopy == this->Sites)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 int SiteGraph::SiteDegree(int xIndex, int yIndex)
@@ -183,9 +293,41 @@ BondGraph& BondGraph::operator=( const BondGraph & other)
 
 bool BondGraph::operator==( const BondGraph & other)
 {
-    return ( (this->Order == other.Order) &&
-             (this->LatticeConstant == other.LatticeConstant) &&
-             ((this->Bonds == other.Bonds) || (*this.Isomorphic(other))));
+    if( ( other.LatticeConstant == this->LatticeConstant) &&
+        ( other.Order == this->Order) )
+    {
+        for( int currentFactor = 0; currentFactor < 8; currentFactor++)
+        {
+            vector<pair< pair<int,int>, pair<int,int> > > BondsCopy = other.Bonds;
+            Dihedral Transform(currentFactor);
+            for_each(BondsCopy.begin(), BondsCopy.end(), Transform);
+            for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
+            {
+                pair<int,int> Temp = BondsCopy.at(CurrentBond).first;
+                if( BondsCopy.at(CurrentBond).first <= BondsCopy.at(CurrentBond).second)
+                {
+                    BondsCopy.at(CurrentBond).first = BondsCopy.at(CurrentBond).second;
+                    BondsCopy.at(CurrentBond).second = Temp;
+                }
+            }
+            sort(BondsCopy.begin(), BondsCopy.end());
+            pair<int, int> shift = BondsCopy.front().first;
+            for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
+            {
+                BondsCopy.at(CurrentBond).first = make_pair( BondsCopy.at(CurrentBond).first.first +shift.first, BondsCopy.at(CurrentBond).first.second + shift.second);
+                BondsCopy.at(CurrentBond).second = make_pair(BondsCopy.at(CurrentBond).second.first + shift.first, BondsCopy.at(CurrentBond).second.second + shift.second);
+            }
+            if (BondsCopy == this->Bonds)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void BondGraph::AddBond(pair<int, int> firstSite, pair<int, int> secondSite )
@@ -217,7 +359,7 @@ bool BondGraph::CheckForBond(pair<int,int> firstSite, pair<int,int> secondSite)
 
 int BondGraph::BondCount(pair<int,int> FirstSite, pair<int,int> SecondSite)
 {
-    unsigned int BondCounter = 0;
+    int BondCounter = 0;
     for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
 

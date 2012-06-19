@@ -31,16 +31,15 @@ class Graph
 
 class SiteGraph : public Graph
 {
-    private :
-        vector< pair<int, int> > Sites;
-
     public :       
+        vector< pair<int, int> > Sites;
         SiteGraph();
         SiteGraph(vector< pair<int, int> > & , int, int, int, vector< int > & );
         void AddSite(int xIndex, int yIndex);
         void RemoveSite(int xIndex, int yIndex);
         bool CheckForSite(int xIndex, int yIndex);
         int SiteDegree(int xIndex, int yIndex);
+        void MakeCanonical();
         bool operator==(const SiteGraph & other);
         SiteGraph & operator=(const SiteGraph & other);
 
@@ -48,16 +47,15 @@ class SiteGraph : public Graph
 
 class BondGraph : public Graph
 {
-    private :
-        vector< pair< pair<int, int>, pair<int, int> > > Bonds;
-
     public :
+        vector< pair< pair<int, int>, pair<int, int> > > Bonds;
         BondGraph();
         BondGraph(vector< pair< pair<int, int>, pair<int,int> > > & , int, int, int, vector< int > & );
         void AddBond(pair<int , int> , pair< int, int> );
         void RemoveBond(pair<int , int> , pair< int, int> );
         bool CheckForBond(pair<int , int> , pair< int, int> );
         int BondCount(pair<int , int> , pair< int, int> );
+        void MakeCanonical();
         bool operator==(const BondGraph & other);
         BondGraph & operator=(const BondGraph & other);
 };
@@ -71,6 +69,8 @@ class Dihedral
         void operator() (pair<int,int>);
         void operator() (pair< pair<int,int>, pair<int,int> >);
 } Transform;
+
+void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrder);
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
 //void WriteGraphsToFile(vector< Graph > & GraphList, string file);

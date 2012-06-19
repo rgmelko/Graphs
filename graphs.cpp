@@ -2,6 +2,16 @@
 
 int main()
 {
+    vector< vector< SiteGraph > > graphs;
+    graphs.resize(1);
+    graphs.front().resize(1);
+    vector<pair<int,int> > Origin;
+    Origin.resize(1);
+    Origin.at(0) = make_pair(0,0);
+    vector< int > NoSubgraphs;
+    SiteGraph BareSite(Origin, 1, 1, 0, NoSubgraphs);
+    graphs.front().at(0) = BareSite;
+    ConstructSiteBasedGraphs(graphs, 5);
     return 0;
 }
 
@@ -11,7 +21,7 @@ Graph::Graph()
     LatticeConstant = 1;
     Identifier = 0;
     SubgraphList.clear();
-};
+}
 
 Graph::Graph(int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
 {
@@ -27,26 +37,13 @@ Graph& Graph::operator=( const Graph & other)
     this->LatticeConstant = other.LatticeConstant;
     this->SubgraphList = other.SubgraphList;
     return *this;
-};
+}
 
 bool Graph::operator==( const Graph & other)
 {
     return (( this->Order == other.Order) &&
            ( this->LatticeConstant == other.LatticeConstant) );
-};
-
-/*Graph Graph::GetGraphFromFile(const int IdNumber, const string & file)
-{
-    vector< Graph > fileGraphs;
-    ReadGraphsFromFile( fileGraphs, file);
-    for( unsigned int currentGraph = 0; currentGraph < fileGraphs.size(); currentGraph++)
-    {
-        if ( fileGraphs.at(currentGraph).Identifier == IdNumber)
-        {
-            return fileGraphs.at(currentGraph);
-        }
-    }
-}*/
+}
 
 SiteGraph::SiteGraph()
 {
@@ -78,7 +75,7 @@ SiteGraph& SiteGraph::operator=( const SiteGraph & other)
 void SiteGraph::AddSite(int xIndex, int yIndex)
 {
     unsigned int InsertCounter = 0;
-    while ( this->Sites.at(InsertCounter).first <= xIndex && this->Sites.at(InsertCounter).second <= yIndex && InsertCounter< this->Sites.size())
+    while (  InsertCounter < this->Sites.size() && this->Sites.at(InsertCounter).first <= xIndex && this->Sites.at(InsertCounter).second <= yIndex )
     {
         InsertCounter++;
     }
@@ -105,12 +102,12 @@ bool SiteGraph::CheckForSite(int xIndex, int yIndex)
 Dihedral::Dihedral()
 {
     element = 0;
-};
+}
 
 Dihedral::Dihedral(int factor)
 {
     element = factor;
-};
+}
 
 void Dihedral::operator()(pair<int, int> Coordinates)
 {
@@ -264,6 +261,32 @@ int SiteGraph::SiteDegree(int xIndex, int yIndex)
     return DegreeCounter;
 }
 
+void SiteGraph::MakeCanonical()
+{
+    unsigned int GlobalGraphKey = 0;
+    vector< pair<int,int> > CanonicalSites;
+
+    for( int currentFactor = 0; currentFactor < 8; currentFactor++)
+    {
+        unsigned int LocalGraphKey = 0;
+        vector< pair<int,int> > SitesCopy = this->Sites;
+        for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
+        sort(SitesCopy.begin(), SitesCopy.end());
+        pair<int,int> shift = make_pair(-SitesCopy.front().first, -SitesCopy.front().second);
+        for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
+        {
+            SitesCopy.at(CurrentSite) = make_pair(SitesCopy.at(CurrentSite).first + shift.first, SitesCopy.at(CurrentSite).second + shift.second);
+            LocalGraphKey += SitesCopy.at(CurrentSite).first*this->Order - SitesCopy.at(CurrentSite).second;
+        }
+        if( LocalGraphKey > GlobalGraphKey )
+        {
+            GlobalGraphKey = LocalGraphKey;
+            CanonicalSites = SitesCopy;
+        }
+    }
+    this->Sites = CanonicalSites;
+}
+
 BondGraph::BondGraph()
 {
     Order = 0;
@@ -373,126 +396,65 @@ int BondGraph::BondCount(pair<int,int> FirstSite, pair<int,int> SecondSite)
     }
     return BondCounter;
 }
-/*
-void WriteGraphsToFile( vector< Graph > & GraphList, std::string file)
+
+void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrder)
 {
-    ofstream output(file.c_str());
-    for( unsigned int currentGraph = 0; currentGraph < GraphList.size(); currentGraph++)
+    vector< SiteGraph > NewGraphs;
+    int GlobalIdentifier = graphs.back().back().Identifier;
+    int CurrentOrder = graphs.back().back().Order + 1;
+    
+    while (CurrentOrder <= FinalOrder)
     {
-        output<<GraphList[currentGraph].Identifier<<endl;
-        output<<GraphList[currentGraph].NumberSites<<endl;
-        output<<GraphList[currentGraph].NumberBonds<<endl;
-        output<<GraphList[currentGraph].LatticeConstant<<endl;
-
-        for (unsigned int currentBond = 0; currentBond < GraphList[currentGraph].AdjacencyList.size(); currentBond++)
+        for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
-            output<<"("<<GraphList[currentGraph].AdjacencyList[currentBond].first<<","<<GraphList[currentGraph].AdjacencyList[currentBond].second<<")";
-        }
-        output<<endl;
-
-        for (unsigned int currentSubgraph = 0; currentSubgraph < GraphList[currentGraph].SubgraphList.size(); currentSubgraph++)
-        {
-            output<<"("<<GraphList[currentGraph].SubgraphList[currentSubgraph]<<")";
-        }
-        output<<endl;
-    }
-}
-
-void ReadGraphsFromFile( vector< Graph > & GraphList, const string & file)
-{
-    ifstream input(file.c_str());
-    vector< string > rawLines;
-    int currentGraph;
-    const int memberCount = 6;
-
-    while ( !input.eof() )
-    {
-        rawLines.resize(rawLines.size() + 1);
-        getline(input, rawLines.back()) ; 
-    }
-
-    input.close();
-
-    for (unsigned int currentLine = 0; currentLine < rawLines.size(); currentLine++)
-    {
-        currentGraph = currentLine/memberCount;
-        Graph tempGraph;
-        unsigned int currentChar = 0;
-        string currentNumber;
-        switch ( currentLine % memberCount )
-        {
-            case 0 :
-                tempGraph.Identifier = atoi(rawLines.at(currentLine).c_str());
-            case 1 :
-                tempGraph.NumberSites = atoi(rawLines.at(currentLine).c_str());
-                break;
-            case 2 :
-                tempGraph.NumberBonds = atoi(rawLines.at(currentLine).c_str());
-                break;
-            case 3 : 
-                tempGraph.LatticeConstant = atoi(rawLines.at(currentLine).c_str());
-                break;
-            case 4 : 
-                
-                while ( currentChar < rawLines.at(currentLine).length() )
-                {
-                    if ( rawLines.at(currentLine)[currentChar] == '(' )
-                    {
-                        tempGraph.AdjacencyList.resize( tempGraph.AdjacencyList.size() + 1);
-                    }
-                    if ( rawLines.at(currentLine)[currentChar] != '(' &&
-                         rawLines.at(currentLine)[currentChar] != ')' &&
-                         rawLines.at(currentLine)[currentChar] != ',' && 
-                         rawLines.at(currentLine)[currentChar] != '\n' )
-                    {
-                        currentNumber.push_back(rawLines.at(currentLine)[currentChar]);
-                    }
-                    if ( rawLines.at(currentLine)[currentChar] == ',' )
-                    {
-                        tempGraph.AdjacencyList.back().first = atoi(currentNumber.c_str());
-                        currentNumber.clear();
-                    }
-                    if ( rawLines.at(currentLine)[currentChar] == ')' )
-                    {
-                        tempGraph.AdjacencyList.back().second = atoi(currentNumber.c_str());
-                        currentNumber.clear();
-                    }
-                }
-                break;
-            case 5 :
-
-                while ( currentChar < rawLines.at(currentLine).length() )
-                {
-                    if ( rawLines.at(currentLine)[currentChar] == '(' )
-                    {
-                        tempGraph.SubgraphList.resize( tempGraph.SubgraphList.size() + 1);
-                    }
-                    
-                    if ( rawLines.at(currentLine)[currentChar] != '(' &&
-                         rawLines.at(currentLine)[currentChar] != ')' &&
-                         rawLines.at(currentLine)[currentChar] != '\n' )
-                    {
-                        currentNumber.push_back(rawLines.at(currentLine)[currentChar]);
-                    }
-                    if ( rawLines.at(currentLine)[currentChar] == ')' )
-                    {
-                        tempGraph.SubgraphList.back() = atoi(currentNumber.c_str());
-                        currentNumber.clear();
-                    }
-                }
-                break;
-        }
+            SiteGraph OldGraph = graphs.back().at(CurrentGraph);
+            for( unsigned int CurrentSite = 0; CurrentSite < OldGraph.Sites.size(); CurrentSite++)
+            {
+                pair<int,int> EastSite = make_pair(OldGraph.Sites.at(CurrentSite).first + 1, OldGraph.Sites.at(CurrentSite).second);
+                pair<int,int> NorthSite = make_pair(OldGraph.Sites.at(CurrentSite).first , OldGraph.Sites.at(CurrentSite).second + 1);
             
-        GraphList.push_back(tempGraph);
-        
+                if( !binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), EastSite))
+                {
+                    SiteGraph NewGraph;
+                    NewGraph = OldGraph;
+                    NewGraph.AddSite( EastSite.first, EastSite.second);
+                    NewGraph.Order = OldGraph.Order + 1;
+                    NewGraph.SubgraphList.push_back( OldGraph.Identifier );
+                    NewGraph.MakeCanonical();
+                    bool Exists = false;
+                    for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                    {
+                        Exists |= (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                    }
+                    if( !Exists )
+                    {
+                        NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraphs.push_back( NewGraph );
+                    }
+                
+                }
+                if( !binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), NorthSite))
+                {
+                    SiteGraph NewGraph;
+                    NewGraph = OldGraph;
+                    NewGraph.AddSite(NorthSite.first, NorthSite.second);
+                    NewGraph.Order = OldGraph.Order + 1;
+                    NewGraph.SubgraphList.push_back( OldGraph.Identifier );
+                    NewGraph.MakeCanonical();
+                    bool Exists = false;
+                    for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                    {
+                        Exists |= (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                    }
+                    if( !Exists )
+                    {
+                        NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraphs.push_back(NewGraph);
+                    }
+                }
+            }
+        }
+        graphs.push_back(NewGraphs);
+        CurrentOrder++;
     }
 }
-*/
-/*
-std::string getFileContents(const std::string& filename)
-{
-        std::ifstream file(filename.c_str());
-        return std::string(std::istreambuf_iterator<char>(file),
-                           std::istreambuf_iterator<char>());
-}
-*/

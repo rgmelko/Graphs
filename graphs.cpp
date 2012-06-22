@@ -11,8 +11,36 @@ int main()
     vector< int > NoSubgraphs;
     SiteGraph BareSite(Origin, 1, 1, 0, NoSubgraphs);
     graphs.front().at(0) = BareSite;
-    ConstructSiteBasedGraphs(graphs, 5);
+    ConstructSiteBasedGraphs(graphs, 4);
+    for(unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
+    {
+        graphs.back().at(CurrentGraph).PrintGraph();
+    }
+    /*vector< int > NoSubgraphs;
+    */
+    vector<pair<int,int> > Test1;
+    Test1.resize(3);
+    Test1.at(0) = make_pair(0,0);
+    Test1.at(1) = make_pair(0,1);
+    Test1.at(2) = make_pair(1,0);
+    SiteGraph TestGraph(Test1, 1, 3, 0, NoSubgraphs);
+
+    vector<pair<int,int> > Test2;
+    Test2.resize(3);
+    Test2.at(0) = make_pair(0,0);
+    Test2.at(1) = make_pair(1,0);
+    Test2.at(2) = make_pair(1,1);
+    SiteGraph TestGraph2(Test2, 1, 3, 0, NoSubgraphs);
+    if( TestGraph2 == TestGraph && TestGraph == TestGraph2 )
+    {
+        cout<<"True"<<endl;
+    }
+    else
+    {    
+        cout<<"False"<<endl;
+    }
     return 0;
+
 }
 
 Graph::Graph()
@@ -99,6 +127,18 @@ bool SiteGraph::CheckForSite(int xIndex, int yIndex)
     return binary_search(this->Sites.begin(), this->Sites.end(), TempSite);
 }
 
+void SiteGraph::PrintGraph()
+{
+    cout<<this->Identifier<<endl;
+    cout<<this->Order<<endl;
+    cout<<this->LatticeConstant<<endl;
+    for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++)
+    {
+        cout<<"("<<Sites.at(CurrentSite).first<<", "<<Sites.at(CurrentSite).second<<") ";
+    }
+    cout<<endl;
+}
+
 Dihedral::Dihedral()
 {
     element = 0;
@@ -109,7 +149,7 @@ Dihedral::Dihedral(int factor)
     element = factor;
 }
 
-void Dihedral::operator()(pair<int, int> Coordinates)
+void Dihedral::operator()(pair<int, int> & Coordinates)
 {
     int TempFirst;
     int TempSecond;
@@ -152,7 +192,7 @@ void Dihedral::operator()(pair<int, int> Coordinates)
     }
 }
 
-void Dihedral::operator()(pair< pair<int, int>, pair<int,int> > Coordinates)
+void Dihedral::operator()(pair< pair<int, int>, pair<int,int> > & Coordinates)
 {
     int TempFirst;
     int TempSecond;
@@ -225,12 +265,18 @@ bool SiteGraph::operator==(const SiteGraph & other)
             Dihedral Transform(currentFactor);
             for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
             sort(SitesCopy.begin(), SitesCopy.end());
-            pair<int,int> shift = make_pair(-SitesCopy.front().first, -SitesCopy.front().second);
+            bool Isomorphic = true; 
+            const pair<int,int> shift = make_pair(this->Sites.front().first - SitesCopy.front().first, this->Sites.front().second - SitesCopy.front().second);
+            //cout<<"Canonical Shift: "<<shift.first<<" "<<shift.second<<endl;
+            
             for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
             {
-                SitesCopy.at(CurrentSite) = make_pair(SitesCopy.at(CurrentSite).first + shift.first, SitesCopy.at(CurrentSite).second + shift.second);
+                //cout<<"Current Site: "<<SitesCopy.at(CurrentSite).first<<" "<<SitesCopy.at(CurrentSite).second<<endl;
+                //cout<<"Current Shift: "<<this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first<<" "<<this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second<<endl;
+                Isomorphic = (Isomorphic) && (shift.first == (this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first)) && (shift.second == (this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second ));
             }
-            if (SitesCopy == this->Sites)
+            //cout<<endl;
+            if (Isomorphic)
             {
                 return true;
             }
@@ -263,20 +309,21 @@ int SiteGraph::SiteDegree(int xIndex, int yIndex)
 
 void SiteGraph::MakeCanonical()
 {
-    unsigned int GlobalGraphKey = 0;
+    int GlobalGraphKey = 0;
     vector< pair<int,int> > CanonicalSites;
 
     for( int currentFactor = 0; currentFactor < 8; currentFactor++)
     {
-        unsigned int LocalGraphKey = 0;
+        int LocalGraphKey = 0;
         vector< pair<int,int> > SitesCopy = this->Sites;
+        Dihedral Transform(currentFactor);
         for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
         sort(SitesCopy.begin(), SitesCopy.end());
         pair<int,int> shift = make_pair(-SitesCopy.front().first, -SitesCopy.front().second);
         for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
         {
             SitesCopy.at(CurrentSite) = make_pair(SitesCopy.at(CurrentSite).first + shift.first, SitesCopy.at(CurrentSite).second + shift.second);
-            LocalGraphKey += SitesCopy.at(CurrentSite).first*this->Order - SitesCopy.at(CurrentSite).second;
+            LocalGraphKey += SitesCopy.at(CurrentSite).first*this->Order + SitesCopy.at(CurrentSite).second;
         }
         if( LocalGraphKey > GlobalGraphKey )
         {
@@ -397,7 +444,7 @@ int BondGraph::BondCount(pair<int,int> FirstSite, pair<int,int> SecondSite)
     return BondCounter;
 }
 
-void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrder)
+void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder)
 {
     vector< SiteGraph > NewGraphs;
     int GlobalIdentifier = graphs.back().back().Identifier;
@@ -405,6 +452,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrd
     
     while (CurrentOrder <= FinalOrder)
     {
+        NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
             SiteGraph OldGraph = graphs.back().at(CurrentGraph);
@@ -430,6 +478,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrd
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraphs.push_back( NewGraph );
+                        //NewGraph.PrintGraph();
                     }
                 
                 }
@@ -444,17 +493,18 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrd
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists |= (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                        Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
                     }
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraphs.push_back(NewGraph);
+                        //NewGraph.PrintGraph();
                     }
                 }
             }
         }
-        graphs.push_back(NewGraphs);
+        graphs.insert(graphs.end(), NewGraphs);
         CurrentOrder++;
     }
 }

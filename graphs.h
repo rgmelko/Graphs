@@ -40,6 +40,7 @@ class SiteGraph : public Graph
         bool CheckForSite(int xIndex, int yIndex);
         int SiteDegree(int xIndex, int yIndex);
         void MakeCanonical();
+        void PrintGraph();
         bool operator==(const SiteGraph & other);
         SiteGraph & operator=(const SiteGraph & other);
 
@@ -66,11 +67,11 @@ class Dihedral
         int element;
         Dihedral();
         Dihedral(int);
-        void operator() (pair<int,int>);
-        void operator() (pair< pair<int,int>, pair<int,int> >);
+        void operator() (pair<int,int> & );
+        void operator() (pair< pair<int,int>, pair<int,int> > & );
 } Transform;
 
-void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > graphs, int FinalOrder);
+void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder);
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
 //void WriteGraphsToFile(vector< Graph > & GraphList, string file);

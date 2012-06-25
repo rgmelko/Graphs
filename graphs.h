@@ -76,4 +76,5 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
 void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & graphs, unsigned int Finalm, unsigned int Finaln);
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
-//void WriteGraphsToFile(vector< Graph > & GraphList, string file);
+void WriteGraphsToFile(vector< SiteGraph > & GraphList, string file);
+void WriteGraphsToFile(vector< vector< SiteGraph > > & GraphList, string file);

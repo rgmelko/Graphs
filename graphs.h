@@ -18,10 +18,10 @@ class Graph
         int LatticeConstant;
         int Order;
         int Identifier;
-        vector< int > SubgraphList;
+        vector< pair<int, int> > SubgraphList;
 
         Graph();
-        Graph(int, int, int, vector< int > & );
+        Graph(int, int, int, vector< pair<int, int> > & );
 
         Graph& operator=(const Graph & other);
         bool operator==(const Graph & other);
@@ -34,7 +34,7 @@ class SiteGraph : public Graph
     public :       
         vector< pair<int, int> > Sites;
         SiteGraph();
-        SiteGraph(vector< pair<int, int> > & , int, int, int, vector< int > & );
+        SiteGraph(vector< pair<int, int> > & , int, int, int, vector< pair<int, int> > & );
         void AddSite(int xIndex, int yIndex);
         void RemoveSite(int xIndex, int yIndex);
         bool CheckForSite(int xIndex, int yIndex);
@@ -51,7 +51,7 @@ class BondGraph : public Graph
     public :
         vector< pair< pair<int, int>, pair<int, int> > > Bonds;
         BondGraph();
-        BondGraph(vector< pair< pair<int, int>, pair<int,int> > > & , int, int, int, vector< int > & );
+        BondGraph(vector< pair< pair<int, int>, pair<int,int> > > & , int, int, int, vector< pair<int, int> > & );
         void AddBond(pair<int , int> , pair< int, int> );
         void RemoveBond(pair<int , int> , pair< int, int> );
         bool CheckForBond(pair<int , int> , pair< int, int> );
@@ -73,5 +73,8 @@ class Dihedral
 
 void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder);
 
+void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & graphs, unsigned int Finalm, unsigned int Finaln);
+
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
-//void WriteGraphsToFile(vector< Graph > & GraphList, string file);
+void WriteGraphsToFile(vector< SiteGraph > & GraphList, string file);
+void WriteGraphsToFile(vector< vector< SiteGraph > > & GraphList, string file);

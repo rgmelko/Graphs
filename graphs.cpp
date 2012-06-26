@@ -2,43 +2,9 @@
 
 int main()
 {
-    vector< vector< SiteGraph > > graphs;
-    graphs.resize(1);
-    graphs.front().resize(1);
-    vector<pair<int,int> > Origin;
-    Origin.resize(1);
-    Origin.at(0) = make_pair(0,0);
-    vector< int > NoSubgraphs;
-    SiteGraph BareSite(Origin, 1, 1, 0, NoSubgraphs);
-    graphs.front().at(0) = BareSite;
-    ConstructSiteBasedGraphs(graphs, 4);
-    for(unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
-    {
-        graphs.back().at(CurrentGraph).PrintGraph();
-    }
-    /*vector< int > NoSubgraphs;
-    */
-    vector<pair<int,int> > Test1;
-    Test1.resize(3);
-    Test1.at(0) = make_pair(0,0);
-    Test1.at(1) = make_pair(0,1);
-    Test1.at(2) = make_pair(1,0);
-    SiteGraph TestGraph(Test1, 1, 3, 0, NoSubgraphs);
-
-    vector<pair<int,int> > Test2;
-    Test2.resize(3);
-    Test2.at(0) = make_pair(0,0);
-    Test2.at(1) = make_pair(1,0);
-    Test2.at(2) = make_pair(1,1);
-    SiteGraph TestGraph2(Test2, 1, 3, 0, NoSubgraphs);
-    if( TestGraph2 == TestGraph && TestGraph == TestGraph2 )
-    {
-        cout<<"True"<<endl;
-    }
-    else
-    {    
-        cout<<"False"<<endl;
-    }
+    vector< vector< SiteGraph > > rectangles;
+    ConstructRectangularSiteGraphs(rectangles, 4, 4);
+    WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
 }
@@ -51,7 +17,7 @@ Graph::Graph()
     SubgraphList.clear();
 }
 
-Graph::Graph(int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
+Graph::Graph(int IdentNumber, int order, int LattConst, vector< pair<int, int> > & subgraphs )
 {
     Identifier = IdentNumber;
     Order = order;
@@ -82,7 +48,7 @@ SiteGraph::SiteGraph()
     SubgraphList.clear();
 }
 
-SiteGraph::SiteGraph(vector<pair <int, int> > & siteList, int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
+SiteGraph::SiteGraph(vector<pair <int, int> > & siteList, int IdentNumber, int order, int LattConst, vector< pair<int, int> > & subgraphs )
 {
     Identifier = IdentNumber;
     Order = order;
@@ -129,9 +95,9 @@ bool SiteGraph::CheckForSite(int xIndex, int yIndex)
 
 void SiteGraph::PrintGraph()
 {
-    cout<<this->Identifier<<endl;
-    cout<<this->Order<<endl;
-    cout<<this->LatticeConstant<<endl;
+    cout<<"ID number: "<<this->Identifier<<endl;
+    cout<<"Order: "<<this->Order<<endl;
+    cout<<"Lattice Constant: "<<this->LatticeConstant<<endl;
     for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++)
     {
         cout<<"("<<Sites.at(CurrentSite).first<<", "<<Sites.at(CurrentSite).second<<") ";
@@ -267,15 +233,11 @@ bool SiteGraph::operator==(const SiteGraph & other)
             sort(SitesCopy.begin(), SitesCopy.end());
             bool Isomorphic = true; 
             const pair<int,int> shift = make_pair(this->Sites.front().first - SitesCopy.front().first, this->Sites.front().second - SitesCopy.front().second);
-            //cout<<"Canonical Shift: "<<shift.first<<" "<<shift.second<<endl;
             
             for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
             {
-                //cout<<"Current Site: "<<SitesCopy.at(CurrentSite).first<<" "<<SitesCopy.at(CurrentSite).second<<endl;
-                //cout<<"Current Shift: "<<this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first<<" "<<this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second<<endl;
                 Isomorphic = (Isomorphic) && (shift.first == (this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first)) && (shift.second == (this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second ));
             }
-            //cout<<endl;
             if (Isomorphic)
             {
                 return true;
@@ -343,7 +305,7 @@ BondGraph::BondGraph()
     SubgraphList.clear();
 }
 
-BondGraph::BondGraph(vector< pair< pair <int, int>, pair<int, int> > > & bondList, int IdentNumber, int order, int LattConst, vector< int > & subgraphs )
+BondGraph::BondGraph(vector< pair< pair <int, int>, pair<int, int> > > & bondList, int IdentNumber, int order, int LattConst, vector< pair< int, int > > & subgraphs )
 {
     Identifier = IdentNumber;
     Order = order;
@@ -467,7 +429,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     NewGraph = OldGraph;
                     NewGraph.AddSite( EastSite.first, EastSite.second);
                     NewGraph.Order = OldGraph.Order + 1;
-                    NewGraph.SubgraphList.push_back( OldGraph.Identifier );
+                    NewGraph.SubgraphList.push_back(make_pair(1, OldGraph.Identifier) );
                     NewGraph.MakeCanonical();
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
@@ -488,7 +450,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     NewGraph = OldGraph;
                     NewGraph.AddSite(NorthSite.first, NorthSite.second);
                     NewGraph.Order = OldGraph.Order + 1;
-                    NewGraph.SubgraphList.push_back( OldGraph.Identifier );
+                    NewGraph.SubgraphList.push_back( make_pair(1, OldGraph.Identifier) );
                     NewGraph.MakeCanonical();
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
@@ -506,5 +468,110 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
         }
         graphs.insert(graphs.end(), NewGraphs);
         CurrentOrder++;
+    }
+}
+
+void ConstructRectangularSiteGraphs(vector< vector< SiteGraph > > & graphs, unsigned int FinalWidth, unsigned int FinalHeight)
+{
+    graphs.resize(FinalWidth);
+    int GlobalIdentifier = 0;
+
+    for( unsigned int CurrentGraphWidth = 1; CurrentGraphWidth <= FinalWidth; CurrentGraphWidth++)
+    {
+        for( unsigned int CurrentGraphHeight = 1; CurrentGraphHeight <= FinalHeight; CurrentGraphHeight++)
+        {
+            unsigned int CurrentOrder = CurrentGraphHeight * CurrentGraphWidth;
+            
+            vector< pair<int, int> > SiteList;
+            SiteList.resize(CurrentOrder);
+            vector< pair<int, int> > Subgraphs;
+
+            for( unsigned int CurrentCheckWidth = 1; CurrentCheckWidth <= CurrentGraphWidth; CurrentCheckWidth++)
+            {
+                for (unsigned int CurrentCheckHeight = 1; CurrentCheckHeight <= CurrentGraphHeight; CurrentCheckHeight++)
+                {
+                    SiteList.at(CurrentCheckHeight - 1 + (CurrentCheckWidth- 1)*CurrentGraphHeight) = make_pair(CurrentCheckWidth - 1, CurrentCheckHeight - 1);
+
+                    int SubgraphCount = (CurrentGraphWidth + 1 - CurrentCheckWidth)*(CurrentGraphHeight + 1 - CurrentCheckHeight);
+                    bool ThisGraph = (CurrentGraphHeight == CurrentCheckHeight) && (CurrentGraphWidth == CurrentCheckWidth);
+                   
+                    if( //CurrentCheckHeight <= graphs.at(CurrentCheckWidth - 1).size() && 
+                        SubgraphCount > 0 &&
+                        !ThisGraph
+                        )
+                    {
+                        Subgraphs.push_back(make_pair( SubgraphCount, graphs.at(CurrentCheckWidth - 1).at(CurrentCheckHeight - 1).Identifier ) );
+                    }
+                }
+            }
+
+            SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
+            graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
+        }
+    }
+}
+
+void WriteGraphsToFile(vector<SiteGraph> & GraphList, string File)
+{
+    ofstream Output(File.c_str());
+    for( unsigned int CurrentGraph = 0; CurrentGraph < GraphList.size(); CurrentGraph++)
+    {
+        Output<<GraphList.at(CurrentGraph).Identifier<<" ";
+        Output<<GraphList.at(CurrentGraph).Order<<" ";
+        Output<<GraphList.at(CurrentGraph).LatticeConstant<<endl;
+
+        for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentGraph).Sites.size(); CurrentSite++)
+        {
+            Output<<"(";
+            Output<<GraphList.at(CurrentGraph).Sites.at(CurrentSite).first;
+            Output<<",";
+            Output<<GraphList.at(CurrentGraph).Sites.at(CurrentSite).second;
+            Output<<")";
+        }
+        Output<<endl;
+        for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentGraph).SubgraphList.size(); CurrentSubgraph++)
+        {
+            Output<<"(";
+            Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).first;
+            Output<<",";
+            Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).second;
+            Output<<")";
+        }
+        Output<<endl;
+
+    }
+}
+
+void WriteGraphsToFile(vector< vector<SiteGraph> > & GraphList, string File)
+{
+    ofstream Output(File.c_str());
+    for( unsigned int CurrentWidth = 0; CurrentWidth < GraphList.size(); CurrentWidth++)
+    {
+        for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
+        {
+
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<endl;
+
+            for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentWidth).at(CurrentHeight).Sites.size(); CurrentSite++)
+            {
+                Output<<"(";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Sites.at(CurrentSite).first;
+                Output<<",";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Sites.at(CurrentSite).second;
+                Output<<")";
+            }
+            Output<<endl;
+            for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
+            {
+                Output<<"(";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).first;
+                Output<<",";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
+                Output<<")";
+            }
+            Output<<endl;
+        }
     }
 }

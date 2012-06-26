@@ -3,7 +3,31 @@
 int main()
 {
     vector< vector< SiteGraph > > rectangles;
-    ConstructRectangularSiteGraphs(rectangles, 4, 4);
+    ConstructRectangularSiteGraphs(rectangles, 10, 10);
+    /*vector< vector< SiteGraph > > testsites;
+    testsites.resize(1);
+    vector< pair<int,int> > SiteList;
+    SiteList.resize(1);
+    SiteList[0].first = 0;
+    SiteList[0].second = 0;
+    vector<pair<int,int> > Empty;
+    SiteGraph Start(SiteList, 0, 1, 1, Empty); 
+    testsites[0].resize(1);
+    testsites[0][0] = Start;
+    ConstructSiteBasedGraphs(testsites, 10);*/
+    /*vector< vector< BondGraph > > testbonds;
+    testbonds.resize(1);
+    vector<pair< pair<int,int>, pair<int,int> > > BondList;
+    BondList.resize(1);
+    BondList[0].first.first = 0;
+    BondList[0].first.second = 0;
+    BondList[0].second.first = 1;
+    BondList[0].second.second = 0;
+    vector<pair<int,int> > Empty;
+    BondGraph Start(BondList, 0, 1, 1, Empty); 
+    testbonds[0].resize(1);
+    testbonds[0][0] = Start;
+    //ConstructBondBasedGraphs(testbonds, 7);*/
     WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
@@ -365,7 +389,7 @@ bool BondGraph::operator==( const BondGraph & other)
 void BondGraph::AddBond(pair<int, int> firstSite, pair<int, int> secondSite )
 {
     unsigned int InsertCounter = 0;
-    while ( this->Bonds.at(InsertCounter).first <= firstSite && this->Bonds.at(InsertCounter).second <= secondSite && InsertCounter< this->Bonds.size())
+    while ( InsertCounter < this->Bonds.size() && this->Bonds.at(InsertCounter).first <= firstSite && this->Bonds.at(InsertCounter).second <= secondSite )
     {
         InsertCounter++;
     }
@@ -406,6 +430,51 @@ int BondGraph::BondCount(pair<int,int> FirstSite, pair<int,int> SecondSite)
     return BondCounter;
 }
 
+void BondGraph::PrintGraph()
+{
+    cout<<"ID number: "<<this->Identifier<<endl;
+    cout<<"Order: "<<this->Order<<endl;
+    cout<<"Lattice Constant: "<<this->LatticeConstant<<endl;
+    for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
+    {
+        cout<<"(";
+        cout<<" (";
+        cout<<this->Bonds.at(CurrentBond).first.first<<", "<<this->Bonds.at(CurrentBond).first.second<<") ";
+        cout<<", (";
+        cout<<this->Bonds.at(CurrentBond).second.first<<", "<<this->Bonds.at(CurrentBond).second.second<<")";
+
+    }
+    cout<<endl;
+}
+void BondGraph::MakeCanonical()
+{
+    int GlobalGraphKey = 0;
+    vector<pair< pair<int,int>, pair<int,int> > > CanonicalBonds;
+
+    for( int currentFactor = 0; currentFactor < 8; currentFactor++)
+    {
+        int LocalGraphKey = 0;
+        vector< pair<pair<int,int>, pair<int,int> > > BondsCopy = this->Bonds;
+        Dihedral Transform(currentFactor);
+        for_each(BondsCopy.begin(), BondsCopy.end(), Transform);
+        sort(BondsCopy.begin(), BondsCopy.end());
+        pair<int,int> shift = make_pair(-BondsCopy.front().first.first, -BondsCopy.front().first.second);
+        for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
+        {
+            BondsCopy.at(CurrentBond).first = make_pair( BondsCopy.at(CurrentBond).first.first + shift.first, BondsCopy.at(CurrentBond).first.second + shift.second);
+            BondsCopy.at(CurrentBond).second = make_pair( BondsCopy.at(CurrentBond).second.first + shift.first, BondsCopy.at(CurrentBond).second.second + shift.second);
+            LocalGraphKey += BondsCopy.at(CurrentBond).first.first*this->Order + BondsCopy.at(CurrentBond).first.second;
+            LocalGraphKey += BondsCopy.at(CurrentBond).second.first*this->Order + BondsCopy.at(CurrentBond).second.second;
+        }
+        if( LocalGraphKey > GlobalGraphKey )
+        {
+            GlobalGraphKey = LocalGraphKey;
+            CanonicalBonds = BondsCopy;
+        }
+    }
+    this->Bonds = CanonicalBonds;
+}
+
 void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder)
 {
     vector< SiteGraph > NewGraphs;
@@ -434,7 +503,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists |= (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                        Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
                     }
                     if( !Exists )
                     {
@@ -511,6 +580,112 @@ void ConstructRectangularSiteGraphs(vector< vector< SiteGraph > > & graphs, unsi
     }
 }
 
+void ConstructBondBasedGraphs(vector< vector< BondGraph > > & graphs, int FinalOrder)
+{
+    vector< BondGraph > NewGraphs;
+    int GlobalIdentifier = graphs.back().back().Identifier;
+    int CurrentOrder = graphs.back().back().Order + 1;
+    
+    while (CurrentOrder <= FinalOrder)
+    {
+        NewGraphs.clear();
+        for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
+        {
+            BondGraph OldGraph = graphs.back().at(CurrentGraph);
+            for( unsigned int CurrentBond = 0; CurrentBond < OldGraph.Bonds.size(); CurrentBond++)
+            {
+                pair< pair<int, int>, pair<int, int> >& ThisBond = OldGraph.Bonds.at(CurrentBond);
+                pair< pair<int, int>, pair<int, int> > FirstBond;
+                pair< pair<int, int>, pair<int, int> > SecondBond;
+                pair< pair<int, int>, pair<int, int> > ThirdBond;
+                pair<int,int> NewSite;
+
+                if( ThisBond.first.first != ThisBond.second.first ) //Bond is horizontal
+                {
+                    NewSite = make_pair(ThisBond.first.first, ThisBond.first.second + 1);
+                    FirstBond = make_pair(ThisBond.first, NewSite);
+                    NewSite = make_pair(ThisBond.second.first, ThisBond.second.second + 1);
+                    SecondBond = make_pair(ThisBond.second, NewSite);
+                    NewSite = make_pair(ThisBond.second.first + 1, ThisBond.second.second);
+                    ThirdBond = make_pair(ThisBond.second, NewSite);
+                }
+
+                else //Bond is vertical
+                {
+
+                    NewSite = make_pair(ThisBond.second.first, ThisBond.second.second + 1);
+                    FirstBond = make_pair(ThisBond.second, NewSite);
+                    NewSite = make_pair(ThisBond.second.first + 1, ThisBond.second.second);
+                    SecondBond = make_pair(ThisBond.second, NewSite);
+                    NewSite = make_pair(ThisBond.first.first + 1, ThisBond.first.second);
+                    ThirdBond = make_pair(ThisBond.first, NewSite);
+                }
+                 
+                if( !binary_search( OldGraph.Bonds.begin(), OldGraph.Bonds.end(), FirstBond))
+                {
+                    BondGraph NewGraph;
+                    NewGraph = OldGraph;
+                    NewGraph.AddBond( FirstBond.first, FirstBond.second);
+                    NewGraph.Order = OldGraph.Order + 1;
+                    NewGraph.SubgraphList.push_back(make_pair(1, OldGraph.Identifier) );
+                    NewGraph.MakeCanonical();
+                    bool Exists = false;
+                    for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                    {
+                        Exists = Exists || (NewGraph.Bonds == NewGraphs.at(CurrentIndex).Bonds ); 
+                    }
+                    if( !Exists )
+                    {
+                        NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraphs.push_back( NewGraph );
+                    }
+                
+                }
+                if( !binary_search( OldGraph.Bonds.begin(), OldGraph.Bonds.end(), SecondBond))
+                {
+                    BondGraph NewGraph;
+                    NewGraph = OldGraph;
+                    NewGraph.AddBond(SecondBond.first, SecondBond.second);
+                    NewGraph.Order = OldGraph.Order + 1;
+                    NewGraph.SubgraphList.push_back( make_pair(1, OldGraph.Identifier) );
+                    NewGraph.MakeCanonical();
+                    bool Exists = false;
+                    for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                    {
+                        Exists = Exists || (NewGraph.Bonds == NewGraphs.at(CurrentIndex).Bonds ); 
+                    }
+                    if( !Exists )
+                    {
+                        NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraphs.push_back(NewGraph);
+                    }
+                }
+                
+                if( !binary_search( OldGraph.Bonds.begin(), OldGraph.Bonds.end(), ThirdBond))
+                {
+                    BondGraph NewGraph;
+                    NewGraph = OldGraph;
+                    NewGraph.AddBond(ThirdBond.first, ThirdBond.second);
+                    NewGraph.Order = OldGraph.Order + 1;
+                    NewGraph.SubgraphList.push_back( make_pair(1, OldGraph.Identifier) );
+                    NewGraph.MakeCanonical();
+                    bool Exists = false;
+                    for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                    {
+                        Exists = Exists || (NewGraph.Bonds == NewGraphs.at(CurrentIndex).Bonds ); 
+                    }
+                    if( !Exists )
+                    {
+                        NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraphs.push_back(NewGraph);
+                    }
+                }
+            }
+        }
+        graphs.insert(graphs.end(), NewGraphs);
+        CurrentOrder++;
+    }
+}
 void WriteGraphsToFile(vector<SiteGraph> & GraphList, string File)
 {
     ofstream Output(File.c_str());
@@ -556,10 +731,87 @@ void WriteGraphsToFile(vector< vector<SiteGraph> > & GraphList, string File)
 
             for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentWidth).at(CurrentHeight).Sites.size(); CurrentSite++)
             {
-                Output<<"(";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Sites.at(CurrentSite).first;
-                Output<<",";
+                Output<<" ";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Sites.at(CurrentSite).second;
+                Output<<" ";
+            }
+            Output<<endl;
+            for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
+            {
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
+                Output<<" ";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).first;
+                Output<<" ";
+            }
+            Output<<endl;
+        }
+    }
+}
+void WriteGraphsToFile(vector<BondGraph> & GraphList, string File)
+{
+    ofstream Output(File.c_str());
+    for( unsigned int CurrentGraph = 0; CurrentGraph < GraphList.size(); CurrentGraph++)
+    {
+        Output<<GraphList.at(CurrentGraph).Identifier<<" ";
+        Output<<GraphList.at(CurrentGraph).Order<<" ";
+        Output<<GraphList.at(CurrentGraph).LatticeConstant<<endl;
+
+        for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentGraph).Bonds.size(); CurrentBond++)
+        {
+            Output<<"(";
+            Output<<"(";
+            Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).first.first;
+            Output<<",";
+            Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).first.second;
+            Output<<")";
+            Output<<",";
+            Output<<"(";
+            Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).second.first;
+            Output<<",";
+            Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).second.second;
+            Output<<")";
+            Output<<")";
+        }
+        Output<<endl;
+        for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentGraph).SubgraphList.size(); CurrentSubgraph++)
+        {
+            Output<<"(";
+            Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).first;
+            Output<<",";
+            Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).second;
+            Output<<")";
+        }
+        Output<<endl;
+    }
+}
+
+void WriteGraphsToFile(vector< vector<BondGraph> > & GraphList, string File)
+{
+    ofstream Output(File.c_str());
+    for( unsigned int CurrentWidth = 0; CurrentWidth < GraphList.size(); CurrentWidth++)
+    {
+        for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
+        {
+
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<endl;
+
+            for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.size(); CurrentBond++)
+            {
+                Output<<"(";
+                Output<<"(";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).first.first;
+                Output<<",";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).first.second;
+                Output<<")";
+                Output<<",";
+                Output<<"(";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).second.first;
+                Output<<",";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).second.second;
+                Output<<")";
                 Output<<")";
             }
             Output<<endl;

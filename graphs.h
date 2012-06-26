@@ -57,6 +57,7 @@ class BondGraph : public Graph
         bool CheckForBond(pair<int , int> , pair< int, int> );
         int BondCount(pair<int , int> , pair< int, int> );
         void MakeCanonical();
+        void PrintGraph();
         bool operator==(const BondGraph & other);
         BondGraph & operator=(const BondGraph & other);
 };
@@ -72,9 +73,12 @@ class Dihedral
 } Transform;
 
 void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder);
+void ConstructBondBasedGraphs(vector< vector< BondGraph > > & graphs, int FinalOrder);
 
 void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & graphs, unsigned int Finalm, unsigned int Finaln);
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
 void WriteGraphsToFile(vector< SiteGraph > & GraphList, string file);
 void WriteGraphsToFile(vector< vector< SiteGraph > > & GraphList, string file);
+void WriteGraphsToFile(vector< BondGraph > & GraphList, string file);
+void WriteGraphsToFile(vector< vector< BondGraph > > & GraphList, string file);

@@ -27,7 +27,7 @@ int main()
     BondGraph Start(BondList, 0, 1, 1, Empty); 
     testbonds[0].resize(1);
     testbonds[0][0] = Start;
-    //ConstructBondBasedGraphs(testbonds, 7);*/
+    ConstructBondBasedGraphs(testbonds, 2);*/
     WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
@@ -378,21 +378,33 @@ bool BondGraph::operator==( const BondGraph & other)
             for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
             {
                 pair<int,int> Temp = BondsCopy.at(CurrentBond).first;
-                if( BondsCopy.at(CurrentBond).first <= BondsCopy.at(CurrentBond).second)
+                if( BondsCopy.at(CurrentBond).first > BondsCopy.at(CurrentBond).second)
                 {
                     BondsCopy.at(CurrentBond).first = BondsCopy.at(CurrentBond).second;
                     BondsCopy.at(CurrentBond).second = Temp;
                 }
             }
             sort(BondsCopy.begin(), BondsCopy.end());
-            pair<int, int> shift = BondsCopy.front().first;
+            pair<int, int> shift1 = make_pair(this->Bonds.front().first.first - BondsCopy.front().first.first, this->Bonds.front().first.second - BondsCopy.front().first.second);
+            pair<int, int> shift2 = make_pair(this->Bonds.front().second.first - BondsCopy.front().second.first, this->Bonds.front().second.second - BondsCopy.front().second.second);
+            //cout<<"Shifts equal: "<<(shift1 == shift2)<<endl;
+            bool Isomorphic = shift1 == shift2;
             for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
             {
-                BondsCopy.at(CurrentBond).first = make_pair( BondsCopy.at(CurrentBond).first.first +shift.first, BondsCopy.at(CurrentBond).first.second + shift.second);
-                BondsCopy.at(CurrentBond).second = make_pair(BondsCopy.at(CurrentBond).second.first + shift.first, BondsCopy.at(CurrentBond).second.second + shift.second);
+                Isomorphic = Isomorphic && (shift1 == make_pair(this->Bonds.at(CurrentBond).first.first - BondsCopy.at(CurrentBond).first.first, this->Bonds.at(CurrentBond).first.second - BondsCopy.at(CurrentBond).first.second));
+                Isomorphic = Isomorphic && (shift2 == make_pair(this->Bonds.at(CurrentBond).second.first - BondsCopy.at(CurrentBond).second.first, this->Bonds.at(CurrentBond).second.second - BondsCopy.at(CurrentBond).second.second));
             }
-            if (BondsCopy == this->Bonds)
+            if (Isomorphic)
             {
+                /*for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
+                {
+                    pair<int,int> Temp = BondsCopy.at(CurrentBond).first;
+                    if( BondsCopy.at(CurrentBond).first <= BondsCopy.at(CurrentBond).second)
+                    {
+                        BondsCopy.at(CurrentBond).first = BondsCopy.at(CurrentBond).second;
+                        BondsCopy.at(CurrentBond).second = Temp;
+                    }
+                }*/
                 return true;
             }
         }
@@ -459,7 +471,7 @@ void BondGraph::PrintGraph()
         cout<<" (";
         cout<<this->Bonds.at(CurrentBond).first.first<<", "<<this->Bonds.at(CurrentBond).first.second<<") ";
         cout<<", (";
-        cout<<this->Bonds.at(CurrentBond).second.first<<", "<<this->Bonds.at(CurrentBond).second.second<<")";
+        cout<<this->Bonds.at(CurrentBond).second.first<<", "<<this->Bonds.at(CurrentBond).second.second<<")"<<" )";
 
     }
     cout<<endl;
@@ -491,6 +503,30 @@ void BondGraph::MakeCanonical()
         }
     }
     this->Bonds = CanonicalBonds;
+}
+
+void BondGraph::GenerateAdjacencyList()
+{
+    vector< pair<int, int> > SiteList;
+    for(unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
+    {
+        SiteList.push_back( this->Bonds.at(CurrentBond).first );
+        SiteList.push_back( this->Bonds.at(CurrentBond).second );
+    }
+    sort(SiteList.begin(), SiteList.end());
+    vector< pair<int,int> >::iterator TrueEnd;
+    TrueEnd = unique(SiteList.begin(), SiteList.end() );
+    SiteList.resize( TrueEnd - SiteList.begin() );
+
+    for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
+    {
+        vector< pair<int, int> >::iterator FirstSite;
+        vector< pair<int, int> >::iterator SecondSite;
+        FirstSite = find(SiteList.begin(), SiteList.end(), this->Bonds.at(CurrentBond).first);
+        SecondSite = find(SiteList.begin(), SiteList.end(), this->Bonds.at(CurrentBond).second);
+        this->AdjacencyList.push_back(make_pair( FirstSite - SiteList.begin(), SecondSite - SiteList.begin() ) );
+    }
+    sort( this->AdjacencyList.begin(), this->AdjacencyList.end());
 }
 
 void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder)
@@ -593,6 +629,7 @@ void ConstructRectangularSiteGraphs(vector< vector< SiteGraph > > & graphs, unsi
             }
 
             SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
+            NewGraph.GenerateAdjacencyList();
             graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
         }
     }
@@ -633,6 +670,7 @@ void ConstructRectangularSiteGraphs(vector< vector< SiteGraph > > & graphs, unsi
             }
 
             SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
+            NewGraph.GenerateAdjacencyList();
             graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
         }
     }
@@ -690,7 +728,7 @@ void ConstructBondBasedGraphs(vector< vector< BondGraph > > & graphs, int FinalO
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists = Exists || (NewGraph.Bonds == NewGraphs.at(CurrentIndex).Bonds ); 
+                        Exists = Exists || (NewGraph == NewGraphs.at(CurrentIndex) ); 
                     }
                     if( !Exists )
                     {
@@ -710,7 +748,7 @@ void ConstructBondBasedGraphs(vector< vector< BondGraph > > & graphs, int FinalO
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists = Exists || (NewGraph.Bonds == NewGraphs.at(CurrentIndex).Bonds ); 
+                        Exists = Exists || (NewGraph == NewGraphs.at(CurrentIndex) ); 
                     }
                     if( !Exists )
                     {
@@ -730,7 +768,7 @@ void ConstructBondBasedGraphs(vector< vector< BondGraph > > & graphs, int FinalO
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists = Exists || (NewGraph.Bonds == NewGraphs.at(CurrentIndex).Bonds ); 
+                        Exists = Exists || (NewGraph == NewGraphs.at(CurrentIndex) ); 
                     }
                     if( !Exists )
                     {
@@ -759,6 +797,14 @@ void WriteGraphsToFile(vector<SiteGraph> & GraphList, string File)
             Output<<GraphList.at(CurrentGraph).Sites.at(CurrentSite).first;
             Output<<" ";
             Output<<GraphList.at(CurrentGraph).Sites.at(CurrentSite).second;
+            Output<<" ";
+        }
+        Output<<endl;
+        for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentGraph).AdjacencyList.size(); CurrentConnection++)
+        {
+            Output<<GraphList.at(CurrentGraph).AdjacencyList.at(CurrentConnection).first;
+            Output<<" ";
+            Output<<GraphList.at(CurrentGraph).AdjacencyList.at(CurrentConnection).second;
             Output<<" ";
         }
         Output<<endl;
@@ -795,6 +841,14 @@ void WriteGraphsToFile(vector< vector<SiteGraph> > & GraphList, string File)
                 Output<<" ";
             }
             Output<<endl;
+            for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.size(); CurrentConnection++)
+            {
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.at(CurrentConnection).first;
+                Output<<" ";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.at(CurrentConnection).second;
+                Output<<" ";
+            }
+            Output<<endl;
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
@@ -813,32 +867,27 @@ void WriteGraphsToFile(vector<BondGraph> & GraphList, string File)
     {
         Output<<GraphList.at(CurrentGraph).Identifier<<" ";
         Output<<GraphList.at(CurrentGraph).Order<<" ";
-        Output<<GraphList.at(CurrentGraph).LatticeConstant<<endl;
+        Output<<GraphList.at(CurrentGraph).LatticeConstant<<" ";
+        Output<<1<<endl;
 
         for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentGraph).Bonds.size(); CurrentBond++)
         {
-            Output<<"(";
-            Output<<"(";
             Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).first.first;
-            Output<<",";
+            Output<<" ";
             Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).first.second;
-            Output<<")";
-            Output<<",";
-            Output<<"(";
+            Output<<" ";
             Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).second.first;
-            Output<<",";
+            Output<<" ";
             Output<<GraphList.at(CurrentGraph).Bonds.at(CurrentBond).second.second;
-            Output<<")";
-            Output<<")";
+            Output<<" ";
         }
         Output<<endl;
         for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentGraph).SubgraphList.size(); CurrentSubgraph++)
         {
-            Output<<"(";
             Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).first;
-            Output<<",";
+            Output<<" ";
             Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).second;
-            Output<<")";
+            Output<<" ";
         }
         Output<<endl;
     }
@@ -854,33 +903,28 @@ void WriteGraphsToFile(vector< vector<BondGraph> > & GraphList, string File)
 
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
-            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<endl;
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<" ";
+            Output<<1<<endl;
 
             for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.size(); CurrentBond++)
             {
-                Output<<"(";
-                Output<<"(";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).first.first;
-                Output<<",";
+                Output<<" ";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).first.second;
-                Output<<")";
-                Output<<",";
-                Output<<"(";
+                Output<<" ";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).second.first;
-                Output<<",";
+                Output<<" ";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).second.second;
-                Output<<")";
-                Output<<")";
+                Output<<" ";
             }
             Output<<endl;
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
-                Output<<"(";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).first;
-                Output<<",";
+                Output<<" ";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
-                Output<<")";
-            }
+                Output<<" ";
+            } 
             Output<<endl;
         }
     }

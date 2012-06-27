@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -O2 -Wall -Wextra -Werror --pedantic
+CFLAGS = -O2 -g -Wall -Wextra -Werror --pedantic
 OBJS = graphs.o
 
 a.out : $(OBJS)

@@ -18,15 +18,15 @@ class Graph
         int LatticeConstant;
         int Order;
         int Identifier;
+        vector< pair<int, int> > AdjacencyList;
         vector< pair<int, int> > SubgraphList;
 
         Graph();
         Graph(int, int, int, vector< pair<int, int> > & );
 
-        Graph& operator=(const Graph & other);
-        bool operator==(const Graph & other);
+        Graph& operator=(const Graph & );
+        bool operator==(const Graph & );
 
-//        Graph GetGraphFromFile(const int Identifier, const string & file);
 };
 
 class SiteGraph : public Graph
@@ -35,14 +35,15 @@ class SiteGraph : public Graph
         vector< pair<int, int> > Sites;
         SiteGraph();
         SiteGraph(vector< pair<int, int> > & , int, int, int, vector< pair<int, int> > & );
-        void AddSite(int xIndex, int yIndex);
-        void RemoveSite(int xIndex, int yIndex);
-        bool CheckForSite(int xIndex, int yIndex);
-        int SiteDegree(int xIndex, int yIndex);
+        void AddSite(int , int );
+        void RemoveSite(int , int );
+        bool CheckForSite(int , int );
+        int SiteDegree(int , int );
         void MakeCanonical();
         void PrintGraph();
-        bool operator==(const SiteGraph & other);
-        SiteGraph & operator=(const SiteGraph & other);
+        void GenerateAdjacencyList();
+        bool operator==(const SiteGraph & );
+        SiteGraph & operator=(const SiteGraph & );
 
 };
 
@@ -58,8 +59,9 @@ class BondGraph : public Graph
         int BondCount(pair<int , int> , pair< int, int> );
         void MakeCanonical();
         void PrintGraph();
-        bool operator==(const BondGraph & other);
-        BondGraph & operator=(const BondGraph & other);
+        void GenerateAdjacencyList();
+        bool operator==(const BondGraph & );
+        BondGraph & operator=(const BondGraph &);
 };
 
 class Dihedral
@@ -72,13 +74,14 @@ class Dihedral
         void operator() (pair< pair<int,int>, pair<int,int> > & );
 } Transform;
 
-void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalOrder);
-void ConstructBondBasedGraphs(vector< vector< BondGraph > > & graphs, int FinalOrder);
+void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & , int );
+void ConstructBondBasedGraphs(vector< vector< BondGraph > > & , int );
 
-void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & graphs, unsigned int Finalm, unsigned int Finaln);
+void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int , unsigned int );
+void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int );
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
-void WriteGraphsToFile(vector< SiteGraph > & GraphList, string file);
-void WriteGraphsToFile(vector< vector< SiteGraph > > & GraphList, string file);
-void WriteGraphsToFile(vector< BondGraph > & GraphList, string file);
+void WriteGraphsToFile(vector< SiteGraph > & , string );
+void WriteGraphsToFile(vector< vector< SiteGraph > > & , string );
+void WriteGraphsToFile(vector< BondGraph > & , string );
 void WriteGraphsToFile(vector< vector< BondGraph > > & GraphList, string file);

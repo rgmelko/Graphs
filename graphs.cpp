@@ -3,7 +3,7 @@
 int main()
 {
     vector< vector< SiteGraph > > rectangles;
-    ConstructRectangularSiteGraphs(rectangles, 16);
+    ConstructRectangularSiteGraphs(rectangles, 6);
     /*vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     vector< pair<int,int> > SiteList;
@@ -28,7 +28,7 @@ int main()
     testbonds[0].resize(1);
     testbonds[0][0] = Start;
     //ConstructBondBasedGraphs(testbonds, 7);*/
-    //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
+    WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
 }

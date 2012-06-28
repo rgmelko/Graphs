@@ -14,14 +14,8 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 4);
-    for( unsigned int i = 0; i < testsites.size(); i++)
-    {
-        for( unsigned int j = 0; j < testsites.at(i).size(); j++)
-        {
-            testsites.at(i).at(j).PrintGraph();
-        }
-    }
+    ConstructSiteBasedGraphs(testsites, 10);
+    WriteGraphsToFile(testsites, "allsitebased.dat");
     /*vector< vector< BondGraph > > testbonds;
     testbonds.resize(1);
     vector<pair< pair<int,int>, pair<int,int> > > BondList;

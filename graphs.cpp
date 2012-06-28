@@ -4,7 +4,7 @@ int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 6);
-    /*vector< vector< SiteGraph > > testsites;
+    vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     vector< pair<int,int> > SiteList;
     SiteList.resize(1);
@@ -14,8 +14,15 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 8);*/
-    vector< vector< BondGraph > > testbonds;
+    ConstructSiteBasedGraphs(testsites, 4);
+    for( unsigned int i = 0; i < testsites.size(); i++)
+    {
+        for( unsigned int j = 0; j < testsites.at(i).size(); j++)
+        {
+            testsites.at(i).at(j).PrintGraph();
+        }
+    }
+    /*vector< vector< BondGraph > > testbonds;
     testbonds.resize(1);
     vector<pair< pair<int,int>, pair<int,int> > > BondList;
     BondList.resize(1);
@@ -27,14 +34,14 @@ int main()
     BondGraph Start(BondList, 0, 1, 1, Empty); 
     testbonds[0].resize(1);
     testbonds[0][0] = Start;
-    ConstructBondBasedGraphs(testbonds, 3);
-    for( unsigned int i = 0; i < testbonds.size(); i++)
+    ConstructBondBasedGraphs(testbonds, 7);*/
+    /*for( unsigned int i = 0; i < testbonds.size(); i++)
     {
         for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
         {
             testbonds.at(i).at(j).PrintGraph();
         }
-    }
+    }*/
     //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
@@ -134,6 +141,41 @@ void SiteGraph::PrintGraph()
         cout<<"("<<Sites.at(CurrentSite).first<<", "<<Sites.at(CurrentSite).second<<") ";
     }
     cout<<endl;
+}
+
+void SiteGraph::FindLatticeConstant()
+{
+    vector< vector< pair<int,int> > > SiteLists;
+    //sort(this->Sites.begin(), this->Sites.end());
+    SiteLists.push_back(this->Sites);
+    int Counter = 1;
+    for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
+    {
+        vector< pair<int,int> > TempSites = this->Sites;
+        Dihedral Transform(CurrentElement);
+        for_each(TempSites.begin(), TempSites.end(), Transform);
+        sort(TempSites.begin(), TempSites.end());
+        bool GlobalShifted = false;
+        for ( unsigned int CurrentList = 0; CurrentList < SiteLists.size(); CurrentList++ )
+        {
+            bool Shifted = true;
+            const pair< int, int> shift = make_pair(SiteLists.at(CurrentList).front().first - TempSites.front().first, SiteLists.at(CurrentList).front().second - TempSites.front().second);
+            
+            for ( unsigned int CurrentSite = 1; CurrentSite < SiteLists.at(CurrentList).size(); CurrentSite++)
+            {
+                Shifted = Shifted && ((shift.first == (SiteLists.at(CurrentList).at(CurrentSite).first - TempSites.at(CurrentSite).first)) && (shift.second == (SiteLists.at(CurrentList).at(CurrentSite).second - TempSites.at(CurrentSite).second)));
+            }
+            
+            GlobalShifted = GlobalShifted || Shifted;
+        }
+        if (!GlobalShifted)
+        {
+            SiteLists.push_back(TempSites);
+            Counter++;
+        }
+    }
+
+    this->LatticeConstant = Counter;
 }
 
 Dihedral::Dihedral()
@@ -553,6 +595,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
     
     while (CurrentOrder <= FinalOrder)
     {
+        
         NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
@@ -578,6 +621,8 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraph.FindLatticeConstant();
+                        NewGraph.GenerateAdjacencyList();
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -598,6 +643,8 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraph.FindLatticeConstant();
+                        NewGraph.GenerateAdjacencyList();
                         NewGraphs.push_back(NewGraph);
                     }
                 }
@@ -605,6 +652,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
         }
         graphs.insert(graphs.end(), NewGraphs);
         CurrentOrder++;
+
     }
 }
 

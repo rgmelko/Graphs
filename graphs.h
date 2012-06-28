@@ -42,6 +42,7 @@ class SiteGraph : public Graph
         void MakeCanonical();
         void PrintGraph();
         void GenerateAdjacencyList();
+        void FindLatticeConstant();
         bool operator==(const SiteGraph & );
         SiteGraph & operator=(const SiteGraph & );
 
@@ -60,6 +61,7 @@ class BondGraph : public Graph
         void MakeCanonical();
         void PrintGraph();
         void GenerateAdjacencyList();
+        void FindLatticeConstant();
         bool operator==(const BondGraph & );
         BondGraph & operator=(const BondGraph &);
 };

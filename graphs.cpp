@@ -2,8 +2,8 @@
 
 int main()
 {
-    vector< vector< SiteGraph > > rectangles;
-    ConstructRectangularSiteGraphs(rectangles, 6);
+    //vector< vector< SiteGraph > > rectangles;
+    //ConstructRectangularSiteGraphs(rectangles, 6);
     /*vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     vector< pair<int,int> > SiteList;
@@ -15,7 +15,7 @@ int main()
     testsites[0].resize(1);
     testsites[0][0] = Start;
     ConstructSiteBasedGraphs(testsites, 8);*/
-    /*vector< vector< BondGraph > > testbonds;
+    vector< vector< BondGraph > > testbonds;
     testbonds.resize(1);
     vector<pair< pair<int,int>, pair<int,int> > > BondList;
     BondList.resize(1);
@@ -27,8 +27,15 @@ int main()
     BondGraph Start(BondList, 0, 1, 1, Empty); 
     testbonds[0].resize(1);
     testbonds[0][0] = Start;
-    ConstructBondBasedGraphs(testbonds, 2);*/
-    WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
+    ConstructBondBasedGraphs(testbonds, 3);
+    for( unsigned int i = 0; i < testbonds.size(); i++)
+    {
+        for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
+        {
+            testbonds.at(i).at(j).PrintGraph();
+        }
+    }
+    //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
 }
@@ -487,6 +494,15 @@ void BondGraph::MakeCanonical()
         vector< pair<pair<int,int>, pair<int,int> > > BondsCopy = this->Bonds;
         Dihedral Transform(currentFactor);
         for_each(BondsCopy.begin(), BondsCopy.end(), Transform);
+        for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
+        {
+            pair<int,int> Temp = BondsCopy.at(CurrentBond).first;
+            if( BondsCopy.at(CurrentBond).first > BondsCopy.at(CurrentBond).second)
+            {
+                BondsCopy.at(CurrentBond).first = BondsCopy.at(CurrentBond).second;
+                BondsCopy.at(CurrentBond).second = Temp;
+            }
+        }
         sort(BondsCopy.begin(), BondsCopy.end());
         pair<int,int> shift = make_pair(-BondsCopy.front().first.first, -BondsCopy.front().first.second);
         for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
@@ -563,7 +579,6 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraphs.push_back( NewGraph );
-                        //NewGraph.PrintGraph();
                     }
                 
                 }
@@ -584,7 +599,6 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraphs.push_back(NewGraph);
-                        //NewGraph.PrintGraph();
                     }
                 }
             }

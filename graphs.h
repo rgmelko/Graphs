@@ -82,6 +82,10 @@ void ConstructBondBasedGraphs(vector< vector< BondGraph > > & , int );
 void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int , unsigned int );
 void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int );
 
+void FindSubgraphs(vector< vector< SiteGraph > > & );
+void FindSubgraphs(vector< SiteGraph > & ); 
+
+
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
 void WriteGraphsToFile(vector< SiteGraph > & , string );
 void WriteGraphsToFile(vector< vector< SiteGraph > > & , string );

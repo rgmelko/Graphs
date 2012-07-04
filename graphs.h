@@ -42,6 +42,7 @@ class SiteGraph : public Graph
         void MakeCanonical();
         void PrintGraph();
         void GenerateAdjacencyList();
+        void FindLatticeConstant();
         bool operator==(const SiteGraph & );
         SiteGraph & operator=(const SiteGraph & );
 
@@ -60,6 +61,7 @@ class BondGraph : public Graph
         void MakeCanonical();
         void PrintGraph();
         void GenerateAdjacencyList();
+        void FindLatticeConstant();
         bool operator==(const BondGraph & );
         BondGraph & operator=(const BondGraph &);
 };
@@ -79,6 +81,10 @@ void ConstructBondBasedGraphs(vector< vector< BondGraph > > & , int );
 
 void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int , unsigned int );
 void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int );
+
+void FindSubgraphs(vector< vector< SiteGraph > > & );
+void FindSubgraphs(vector< SiteGraph > & ); 
+
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
 void WriteGraphsToFile(vector< SiteGraph > & , string );

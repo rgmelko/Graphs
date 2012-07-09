@@ -14,7 +14,7 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 4);
+    ConstructSiteBasedGraphs(testsites, 6);
     FindSubgraphs(testsites);
     WriteGraphsToFile(testsites, "allsitebased.dat");
     /*vector< vector< BondGraph > > testbonds;
@@ -30,13 +30,13 @@ int main()
     testbonds[0].resize(1);
     testbonds[0][0] = Start;
     ConstructBondBasedGraphs(testbonds, 7);*/
-    /*for( unsigned int i = 0; i < testsites.size(); i++)
+    for( unsigned int i = 0; i < testsites.size(); i++)
     {
         for( unsigned int j = 0; j < testsites.at(i).size(); j++)
         {
             testsites.at(i).at(j).PrintGraph();
         }
-    }*/
+    }
     //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
@@ -131,14 +131,22 @@ void SiteGraph::PrintGraph()
     cout<<"ID number: "<<this->Identifier<<endl;
     cout<<"Order: "<<this->Order<<endl;
     cout<<"Lattice Constant: "<<this->LatticeConstant<<endl;
+    cout<<"Real space coordinates: "<<endl;
     for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++)
     {
-        cout<<"("<<Sites.at(CurrentSite).first<<", "<<Sites.at(CurrentSite).second<<") ";
+        cout<<"("<<this->Sites.at(CurrentSite).first<<", "<<this->Sites.at(CurrentSite).second<<") ";
     }
     cout<<endl;
+    cout<<"Subgraph List: "<<endl;
     for ( unsigned int CurrentSubgraph = 0; CurrentSubgraph < this->SubgraphList.size(); CurrentSubgraph++)
     {
-        cout<<"("<<SubgraphList.at(CurrentSubgraph).first<<", "<<SubgraphList.at(CurrentSubgraph).second<<") ";
+        cout<<"("<<this->SubgraphList.at(CurrentSubgraph).first<<", "<<this->SubgraphList.at(CurrentSubgraph).second<<") ";
+    }
+    cout<<endl;
+    cout<<"Adjacency List: "<<endl;
+    for ( unsigned int CurrentBond = 0; CurrentBond < this->AdjacencyList.size(); CurrentBond++)
+    {
+        cout<<"("<<this->AdjacencyList.at(CurrentBond).first<<", "<<this->AdjacencyList.at(CurrentBond).second<<") ";
     }
     cout<<endl;
 }
@@ -313,6 +321,10 @@ bool SiteGraph::operator==(const SiteGraph & other)
             {
                 Isomorphic = (Isomorphic) && (shift.first == (this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first)) && (shift.second == (this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second ));
                 CurrentSite++;
+            }
+            if (this->AdjacencyList.size() > 0 && other.AdjacencyList.size() > 0)
+            {
+                Isomorphic = Isomorphic || (this->AdjacencyList == other.AdjacencyList);
             }
             if (Isomorphic)
             {
@@ -600,7 +612,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
     
     while (CurrentOrder <= FinalOrder)
     {
-        
+        cout<<"Current Order: "<<CurrentOrder<<" Current Global ID: "<<GlobalIdentifier<<endl;   
         NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
@@ -616,18 +628,18 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     NewGraph = OldGraph;
                     NewGraph.AddSite( EastSite.first, EastSite.second);
                     NewGraph.Order = OldGraph.Order + 1;
-                    //NewGraph.SubgraphList.push_back(make_pair(1, OldGraph.Identifier) );
                     NewGraph.MakeCanonical();
+                    NewGraph.GenerateAdjacencyList();
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                        Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites );
+                        Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
                     }
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
-                        NewGraph.GenerateAdjacencyList();
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -638,18 +650,18 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     NewGraph = OldGraph;
                     NewGraph.AddSite(NorthSite.first, NorthSite.second);
                     NewGraph.Order = OldGraph.Order + 1;
-                    //NewGraph.SubgraphList.push_back( make_pair(1, OldGraph.Identifier) );
                     NewGraph.MakeCanonical();
+                    NewGraph.GenerateAdjacencyList();
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
                         Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                        Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
                     }
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
-                        NewGraph.GenerateAdjacencyList();
                         NewGraphs.push_back(NewGraph);
                     }
                 }
@@ -1014,7 +1026,7 @@ void FindSubgraphs(vector< vector< SiteGraph > > & GraphList)
     }
 }
 
-void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
+/*void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
 {
     for( unsigned int CurrentGraphHeight = 0; CurrentGraphHeight < GraphList.size(); CurrentGraphHeight++) 
     {
@@ -1101,7 +1113,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
             }
         }
     }
-}
+}*/
 
 void WriteGraphsToFile(vector<SiteGraph> & GraphList, string File)
 {

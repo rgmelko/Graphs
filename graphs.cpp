@@ -14,7 +14,7 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 4);
+    ConstructSiteBasedGraphs(testsites, 6);
     FindSubgraphs(testsites);
     WriteGraphsToFile(testsites, "allsitebased.dat");
     /*vector< vector< BondGraph > > testbonds;
@@ -30,13 +30,13 @@ int main()
     testbonds[0].resize(1);
     testbonds[0][0] = Start;
     ConstructBondBasedGraphs(testbonds, 7);*/
-    /*for( unsigned int i = 0; i < testsites.size(); i++)
+    for( unsigned int i = 0; i < testsites.size(); i++)
     {
         for( unsigned int j = 0; j < testsites.at(i).size(); j++)
         {
             testsites.at(i).at(j).PrintGraph();
         }
-    }*/
+    }
     //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
@@ -131,14 +131,22 @@ void SiteGraph::PrintGraph()
     cout<<"ID number: "<<this->Identifier<<endl;
     cout<<"Order: "<<this->Order<<endl;
     cout<<"Lattice Constant: "<<this->LatticeConstant<<endl;
+    cout<<"Real space coordinates: "<<endl;
     for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++)
     {
-        cout<<"("<<Sites.at(CurrentSite).first<<", "<<Sites.at(CurrentSite).second<<") ";
+        cout<<"("<<this->Sites.at(CurrentSite).first<<", "<<this->Sites.at(CurrentSite).second<<") ";
     }
     cout<<endl;
+    cout<<"Subgraph List: "<<endl;
     for ( unsigned int CurrentSubgraph = 0; CurrentSubgraph < this->SubgraphList.size(); CurrentSubgraph++)
     {
-        cout<<"("<<SubgraphList.at(CurrentSubgraph).first<<", "<<SubgraphList.at(CurrentSubgraph).second<<") ";
+        cout<<"("<<this->SubgraphList.at(CurrentSubgraph).first<<", "<<this->SubgraphList.at(CurrentSubgraph).second<<") ";
+    }
+    cout<<endl;
+    cout<<"Adjacency List: "<<endl;
+    for ( unsigned int CurrentBond = 0; CurrentBond < this->AdjacencyList.size(); CurrentBond++)
+    {
+        cout<<"("<<this->AdjacencyList.at(CurrentBond).first<<", "<<this->AdjacencyList.at(CurrentBond).second<<") ";
     }
     cout<<endl;
 }
@@ -313,6 +321,10 @@ bool SiteGraph::operator==(const SiteGraph & other)
             {
                 Isomorphic = (Isomorphic) && (shift.first == (this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first)) && (shift.second == (this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second ));
                 CurrentSite++;
+            }
+            if (this->AdjacencyList.size() > 0 && other.AdjacencyList.size() > 0)
+            {
+                Isomorphic = Isomorphic || (this->AdjacencyList == other.AdjacencyList);
             }
             if (Isomorphic)
             {
@@ -600,7 +612,7 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
     
     while (CurrentOrder <= FinalOrder)
     {
-        
+        cout<<"Current Order: "<<CurrentOrder<<" Current Global ID: "<<GlobalIdentifier<<endl;   
         NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
@@ -616,18 +628,18 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     NewGraph = OldGraph;
                     NewGraph.AddSite( EastSite.first, EastSite.second);
                     NewGraph.Order = OldGraph.Order + 1;
-                    //NewGraph.SubgraphList.push_back(make_pair(1, OldGraph.Identifier) );
                     NewGraph.MakeCanonical();
+                    NewGraph.GenerateAdjacencyList();
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
-                        Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                        Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites );
+                        Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
                     }
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
-                        NewGraph.GenerateAdjacencyList();
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -638,18 +650,18 @@ void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & graphs, int FinalO
                     NewGraph = OldGraph;
                     NewGraph.AddSite(NorthSite.first, NorthSite.second);
                     NewGraph.Order = OldGraph.Order + 1;
-                    //NewGraph.SubgraphList.push_back( make_pair(1, OldGraph.Identifier) );
                     NewGraph.MakeCanonical();
+                    NewGraph.GenerateAdjacencyList();
                     bool Exists = false;
                     for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                     {
                         Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites ); 
+                        Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
                     }
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
-                        NewGraph.GenerateAdjacencyList();
                         NewGraphs.push_back(NewGraph);
                     }
                 }
@@ -1013,6 +1025,95 @@ void FindSubgraphs(vector< vector< SiteGraph > > & GraphList)
         }
     }
 }
+
+/*void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
+{
+    for( unsigned int CurrentGraphHeight = 0; CurrentGraphHeight < GraphList.size(); CurrentGraphHeight++) 
+    {
+        for( unsigned int CurrentGraphWidth = 0; CurrentGraphWidth < GraphList.at(CurrentGraphHeight).size(); CurrentGraphWidth++) 
+        {
+            for( unsigned int CurrentCheckHeight = 0; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
+            {
+            
+                for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
+                {
+                    vector< vector< pair< pair<int,int>, pair<int,int> > > > DistinctReps;
+                    DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds );
+
+                    for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                    {
+                         
+                        Dihedral Transform(CurrentElement);
+                        vector< pair< pair<int,int>, pair<int,int> > > ThisRep = GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds;
+                        for_each(ThisRep.begin(), ThisRep.end(), Transform);
+                        sort(ThisRep.begin(), ThisRep.end());
+                        bool GlobalShifted = false;
+                        for ( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++ )
+                        {
+                            bool Shifted = true;
+                            const pair< int, int> shift = make_pair(DistinctReps.at(CurrentRep).front().first.first - ThisRep.front().first.first, DistinctReps.at(CurrentRep).front().first.second - ThisRep.front().first.second);
+            
+                            unsigned int CurrentBond = 1;
+                            while( Shifted && CurrentBond < DistinctReps.at(CurrentRep).size())
+                            {
+                                Shifted = Shifted && ((shift.first == (DistinctReps.at(CurrentRep).at(CurrentBond).first.first - ThisRep.at(CurrentBond).first.first)) && (shift.second == (DistinctReps.at(CurrentRep).at(CurrentBond).first.second - ThisRep.at(CurrentBond).first.second)));
+                                Shifted = Shifted && ((shift.first == (DistinctReps.at(CurrentRep).at(CurrentBond).second.first - ThisRep.at(CurrentBond).second.first)) && (shift.second == (DistinctReps.at(CurrentRep).at(CurrentBond).second.second - ThisRep.at(CurrentBond).second.second)));
+                                CurrentBond++;
+                            }
+            
+                            GlobalShifted = GlobalShifted || Shifted;
+                        }
+                        if (!GlobalShifted)
+                        {
+                            const pair< int, int> shift = make_pair(-ThisRep.front().first.first, -ThisRep.front().first.second);
+                            for( unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
+                            {
+                                ThisRep.at(CurrentBond).first.first += shift.first;
+                                ThisRep.at(CurrentBond).first.second += shift.second;
+                                ThisRep.at(CurrentBond).second.first += shift.first;
+                                ThisRep.at(CurrentBond).second.second += shift.second;
+                            }
+                            DistinctReps.push_back(ThisRep);
+                        }
+                    }
+
+                    //Now we have all distinct permutations of the graph!
+
+                    int Embeddings = 0;
+                    for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
+                    {
+                        pair<int,int> shift = make_pair(0,0);
+                        for( int xBoost = 0; xBoost <= GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.back().second.first; xBoost++)
+                        {
+                            for( int yBoost = 0; yBoost <= GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.back().second.second; yBoost++)
+                            {
+                                shift = make_pair(xBoost, yBoost);
+                                vector< pair<int,int> > CheckList = DistinctReps.at(CurrentRep);
+                                unsigned int Counter = 0;
+                                for( unsigned int CurrentBond = 0; CurrentBond < DistinctReps.at(CurrentRep).size(); CurrentBond++)
+                                {
+                                    CheckList.at(CurrentBond).first.first += shift.first;
+                                    CheckList.at(CurrentBond).first.second += shift.second;
+                                    CheckList.at(CurrentBond).second.first += shift.first;
+                                    CheckList.at(CurrentBond).second.second += shift.second;
+                                    Counter += binary_search(GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.begin(), GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.end(), CheckList.at(CurrentBond));
+                                }
+                                if ( Counter == CheckList.size() )
+                                {
+                                    Embeddings++;
+                                }
+                            }
+                        }
+                    }
+                    if (Embeddings > 0)
+                    {
+                        GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).SubgraphList.push_back(make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
+                    }
+                }
+            }
+        }
+    }
+}*/
 
 void WriteGraphsToFile(vector<SiteGraph> & GraphList, string File)
 {

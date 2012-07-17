@@ -1,6 +1,6 @@
 #include "graphs.h"
 
-int main()
+/*int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 6);
@@ -17,7 +17,7 @@ int main()
     ConstructSiteBasedGraphs(testsites, 5);
     FindSubgraphs(testsites);
     WriteGraphsToFile(testsites, "allsitebased.dat");
-    /*vector< vector< BondGraph > > testbonds;
+    vector< vector< BondGraph > > testbonds;
     testbonds.resize(1);
     vector<pair< pair<int,int>, pair<int,int> > > BondList;
     BondList.resize(1);
@@ -36,11 +36,11 @@ int main()
         {
             testsites.at(i).at(j).PrintGraph();
         }
-    }*/
+    }
     //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
     return 0;
 
-}
+}*/
 
 Graph::Graph()
 {
@@ -961,9 +961,21 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
             for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
             {
                 std::pair<int,int> shift = make_pair(0,0);
-                for( int xBoost = 0; xBoost <= GraphList.at(CurrentGraph).Sites.back().first; xBoost++)
+                int xMax = 0;
+                int yMax = 0;
+                int xMin = 0;
+                int yMin = 0;
+                for( unsigned int CurrentElement = 0; CurrentElement < GraphList.at(CurrentGraph).Sites.size(); CurrentElement++)
                 {
-                    for( int yBoost = 0; yBoost <= GraphList.at(CurrentGraph).Sites.back().second; yBoost++)
+                    xMax = (GraphList.at(CurrentGraph).Sites.at(CurrentElement).first > xMax) ? GraphList.at(CurrentGraph).Sites.at(CurrentElement).first : xMax;
+                    yMax = (GraphList.at(CurrentGraph).Sites.at(CurrentElement).second > yMax) ? GraphList.at(CurrentGraph).Sites.at(CurrentElement).second : yMax;
+                    xMin = (GraphList.at(CurrentGraph).Sites.at(CurrentElement).first < xMin) ? GraphList.at(CurrentGraph).Sites.at(CurrentElement).first : xMin;
+                    yMin = (GraphList.at(CurrentGraph).Sites.at(CurrentElement).second < yMin) ? GraphList.at(CurrentGraph).Sites.at(CurrentElement).second : yMin;
+                }
+
+                for( int xBoost = xMin; xBoost <= xMax; xBoost++)
+                {
+                    for( int yBoost = yMin; yBoost <= yMax; yBoost++)
                     {
                         shift = make_pair(xBoost, yBoost);
                         std::vector< std::pair<int,int> > CheckList = DistinctReps.at(CurrentRep);
@@ -1178,12 +1190,12 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
 void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
 {
     ofstream Output(File.c_str());
-    Output<<0<<endl;
     for( unsigned int CurrentGraph = 0; CurrentGraph < GraphList.size(); CurrentGraph++)
     {
         Output<<GraphList.at(CurrentGraph).Identifier<<" ";
         Output<<GraphList.at(CurrentGraph).Order<<" ";
-        Output<<GraphList.at(CurrentGraph).LatticeConstant<<endl;
+        Output<<GraphList.at(CurrentGraph).LatticeConstant<<" ";
+        Output<<0<<endl;
 
         for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentGraph).Sites.size(); CurrentSite++)
         {
@@ -1215,7 +1227,6 @@ void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
 void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string File)
 {
     ofstream Output(File.c_str());
-    Output<<0<<endl;
     for( unsigned int CurrentWidth = 0; CurrentWidth < GraphList.size(); CurrentWidth++)
     {
         for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
@@ -1223,7 +1234,8 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
 
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
-            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<endl;
+            Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<" ";
+            Output<<0<<endl;
 
             for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentWidth).at(CurrentHeight).Sites.size(); CurrentSite++)
             {

@@ -1,11 +1,12 @@
 #include <fstream>
 #include <cstdio>
-#include <cstdlib>
+//#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <sstream>
 #include <cmath>
 
 using namespace std;
@@ -26,8 +27,8 @@ class Graph
         int LatticeConstant;
         int Order;
         int Identifier;
-        vector< pair<int, int> > AdjacencyList;
-        vector< pair<int, int> > SubgraphList;
+        std::vector< std::pair<int, int> > AdjacencyList;
+        std::vector< std::pair<int, int> > SubgraphList;
 
         /*! Initializes a default graph object
         */
@@ -38,7 +39,7 @@ class Graph
         \param Identifier The unique number which identifies this specific graph
         \param SubGraphList A list of the subgraphs of the graph, and the number of times each subgraph is embeddable in the graph
         */
-        Graph(int, int, int, vector< pair<int, int> > & );
+        Graph(int, int, int, std::vector< std::pair<int, int> > & );
 
         /*! Assigns the value of one Graph to another
         \param other A reference to the graph which is being copied
@@ -61,7 +62,7 @@ A site-based graph is one where the connections between sites are less important
 class SiteGraph : public Graph
 {
     public :       
-        vector< pair<int, int> > Sites;
+        std::vector< std::pair<int, int> > Sites;
         /*! \brief Initializes a default SiteGraph
         */
         SiteGraph();
@@ -72,7 +73,7 @@ class SiteGraph : public Graph
         \param LatticeConstant The number of distinct ways to embed this graph in the lattice
         \param SubgraphList The list of subgraphs of this graph, and the number of ways each can be embedded in the graph
         */
-        SiteGraph(vector< pair<int, int> > & , int, int, int, vector< pair<int, int> > & );
+        SiteGraph(std::vector< std::pair<int, int> > & , int, int, int, std::vector< std::pair<int, int> > & );
         /*! \brief Adds a site to the list of sites
         \param xIndex The x coordinate of the site
         \param yIndex The y coordinate of the site
@@ -120,7 +121,7 @@ A bond-based graph is one where the connections between sites are more important
 class BondGraph : public Graph
 {
     public :
-        vector< pair< pair<int, int>, pair<int, int> > > Bonds;
+        std::vector< std::pair< std::pair<int, int>, std::pair<int, int> > > Bonds;
         /*! \brief Initializes a default BondGraph
         */
         BondGraph();
@@ -131,27 +132,27 @@ class BondGraph : public Graph
         \param LatticeConstant The number of distinct ways to embed this graph in the lattice
         \param SubgraphList The list of subgraphs of this graph, and the number of ways each can be embedded in the graph
         */
-        BondGraph(vector< pair< pair<int, int>, pair<int,int> > > & , int, int, int, vector< pair<int, int> > & );
+        BondGraph(std::vector< std::pair< std::pair<int, int>, std::pair<int,int> > > & , int, int, int, std::vector< std::pair<int, int> > & );
         /*! \brief Adds a bond to the list of bonds
         \param FirstSite The coordinates of the first end-point
         \param SecondSite The coordinates of the second end-point
         */
-        void AddBond(pair<int , int> , pair< int, int> );
+        void AddBond(std::pair<int , int> , std::pair< int, int> );
         /*! \brief Removes a bond from the list of bonds
         \param FirstSite The coordinates of the first end-point
         \param SecondSite The coordinates of the second end-point
         */
-        void RemoveBond(pair<int , int> , pair< int, int> );
+        void RemoveBond(std::pair<int , int> , std::pair< int, int> );
         /*! \brief Determines whether a bond belongs to the list of bonds
         \param FirstSite The coordinates of the first end-point
         \param SecondSite The coordinates of the second end-point
         */
-        bool CheckForBond(pair<int , int> , pair< int, int> );
+        bool CheckForBond(std::pair<int , int> , std::pair< int, int> );
         /*! \brief Finds how many bonds are adjacent (share a site) with the current bond
         \param FirstSite The coordinates of the first end-point
         \param SecondSite The coordinates of the second end-point
         */
-        int BondCount(pair<int , int> , pair< int, int> );
+        int BondCount(std::pair<int , int> , std::pair< int, int> );
         /*! \brief Transforms the graph into its canonical representation
         Uses the Dihedral class to check all representations of the graph, attemping to maximise (xCoordinates)*Order + yCoordinates. Whichever representation maximises this number is unique and canonical.
         */
@@ -190,12 +191,12 @@ class Dihedral
         /*! Applies the transformation to a site
         \param Coordinates The coordinates of the site to be transformed
         */
-        void operator() (pair<int,int> & );
+        void operator() (std::pair<int,int> & );
         /*! Applies the transformation to a bond
         \param Coordinates The coordinates of the end-points of the bond to be transformed
         */
-        void operator() (pair< pair<int,int>, pair<int,int> > & );
-} Transform;
+        void operator() (std::pair< std::pair<int,int>, std::pair<int,int> > & );
+}; //Transform;
 
 /*! \brief Creates all distinct site-based graphs up to some number of sites
 
@@ -204,7 +205,7 @@ Starting with a list of sites, the function adds sites north and east, eliminati
 \param Graphs A collection of graphs to start from, and to which the generated graphs will be appended
 \param FinalOrder The maximum order of the graphs which will be generated
 */ 
-void ConstructSiteBasedGraphs(vector< vector< SiteGraph > > & , int );
+void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & , int );
 
 
 /*! \brief Creates all distinct bond-based graphs up to some number of bonds
@@ -214,7 +215,7 @@ Starting with a list of sites, the function adds bonds north and east, eliminati
 \param Graphs A collection of graphs to start from, and to which the generated graphs will be appended
 \param FinalOrder The maximum order of the graphs which will be generated
 */ 
-void ConstructBondBasedGraphs(vector< vector< BondGraph > > & , int );
+void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & , int );
 
 /*! \brief Creates all closed rectangular site-based graphs up to some maximum width and height
 
@@ -222,27 +223,28 @@ void ConstructBondBasedGraphs(vector< vector< BondGraph > > & , int );
 \param FinalWidth The maximum width of the rectangular graphs
 \param FinalHeight The maximum height of the rectangular graphs
 */
-void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int , unsigned int );
+void ConstructRectangularSiteGraphs( std::vector< std::vector< SiteGraph > > & , unsigned int , unsigned int );
 /*! \brief Creates all closed rectangular site-based graphs up to some maximum order
 
 \param Graphs An empty array which will store the rectangular graphs
 \param FinalOrder The maximum order (height * width) of the rectangles
 */
-void ConstructRectangularSiteGraphs( vector< vector< SiteGraph > > & , unsigned int );
+void ConstructRectangularSiteGraphs( std::vector< std::vector< SiteGraph > > & , unsigned int );
 
 /*! \brief For each graph in a list, finds all other graphs in the list which are its subgraphs, and how many ways there are to embed each subgraph in the graph
 
 \param GraphList The list of graphs to extract subgraphs from
 */ 
-void FindSubgraphs(vector< vector< SiteGraph > > & );
+void FindSubgraphs(std::vector< std::vector< SiteGraph > > & );
 /*! \brief For each graph in a list, finds all other graphs in the list which are its subgraphs, and how many ways there are to embed each subgraph in the graph
 
 \param GraphList The list of graphs to extract subgraphs from
 */ 
-void FindSubgraphs(vector< SiteGraph > & ); 
+void FindSubgraphs(std::vector< SiteGraph > & ); 
 
 //void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
-void WriteGraphsToFile(vector< SiteGraph > & , string );
-void WriteGraphsToFile(vector< vector< SiteGraph > > & , string );
-void WriteGraphsToFile(vector< BondGraph > & , string );
-void WriteGraphsToFile(vector< vector< BondGraph > > & GraphList, string file);
+void ReadGraphsFromFile(std::vector< Graph* > & , string , bool );
+void WriteGraphsToFile(std::vector< SiteGraph > & , string );
+void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string );
+void WriteGraphsToFile(std::vector< BondGraph > & , string );
+void WriteGraphsToFile(std::vector< std::vector< BondGraph > > & GraphList, string file);

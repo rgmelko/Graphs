@@ -14,9 +14,9 @@
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 5);
+    ConstructSiteBasedGraphs(testsites, 12);
     FindSubgraphs(testsites);
-    WriteGraphsToFile(testsites, "allsitebased.dat");
+    WriteGraphsToFile(testsites, "12sitebased.dat");
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(1);
     vector<pair< pair<int,int>, pair<int,int> > > BondList;
@@ -38,6 +38,7 @@
         }
     }
     //WriteGraphsToFile(rectangles, "rectanglegraphs.dat");
+    
     return 0;
 
 }*/
@@ -605,6 +606,10 @@ void BondGraph::GenerateAdjacencyList()
     sort( this->AdjacencyList.begin(), this->AdjacencyList.end());
 }
 
+void BondGraph::FindLatticeConstant()
+{
+}
+
 void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, int FinalOrder)
 {
     std::vector< SiteGraph > NewGraphs;
@@ -643,6 +648,7 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
+                        NewGraph.LowField = false;
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -665,6 +671,7 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
+                        NewGraph.LowField = false;
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -687,6 +694,7 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
                         NewGraph.FindLatticeConstant();
+                        NewGraph.LowField = false;
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -757,6 +765,7 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
 
             SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
             NewGraph.GenerateAdjacencyList();
+            NewGraph.LowField = false;
             graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
         }
     }
@@ -798,6 +807,7 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
 
             SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
             NewGraph.GenerateAdjacencyList();
+            NewGraph.LowField = false;
             graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
         }
     }
@@ -860,6 +870,8 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraph.FindLatticeConstant();
+                        NewGraph.LowField = true;
                         NewGraphs.push_back( NewGraph );
                     }
                 
@@ -880,6 +892,8 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraph.FindLatticeConstant();
+                        NewGraph.LowField = true;
                         NewGraphs.push_back(NewGraph);
                     }
                 }
@@ -900,6 +914,8 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                     if( !Exists )
                     {
                         NewGraph.Identifier = ++GlobalIdentifier;
+                        NewGraph.FindLatticeConstant();
+                        NewGraph.LowField = true;
                         NewGraphs.push_back(NewGraph);
                     }
                 }
@@ -1334,7 +1350,7 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
     }
 }
 
-void ReadGraphsFromFile( std::vector< Graph* > & graphList, const string file, bool field)
+void ReadGraphsFromFile( std::vector< Graph* > & graphList, const string file)
 {
     ifstream input(file.c_str());
     std::vector< string > rawLines;
@@ -1355,22 +1371,33 @@ void ReadGraphsFromFile( std::vector< Graph* > & graphList, const string file, b
     {
         Graph* tempGraph;
   
-        if( field ){
+        unsigned int CurrentLine = CurrentGraph*MemberCount;
+        string currentNumber;
+    
+        int tempId;
+        int tempOrder;
+        int tempLC;
+        bool tempField;
+
+        ss << rawLines.at(CurrentLine);
+          
+        ss >> tempId;
+        ss >> tempOrder;
+        ss >> tempLC;
+        ss >> tempField;
+
+        if( tempField )
+        {
             tempGraph = new BondGraph;
         }
         else
         {
             tempGraph = new SiteGraph;
         }
-        unsigned int CurrentLine = CurrentGraph*MemberCount + 1;
-        string currentNumber;
-    
-        ss << rawLines.at(CurrentLine);
-          
-        ss >> tempGraph->Identifier;
-        ss >> tempGraph->Order;
-        ss >> tempGraph->LatticeConstant;
-           
+        tempGraph->Order = tempOrder;
+        tempGraph->Identifier = tempId;
+        tempGraph->LatticeConstant = tempLC;
+        tempGraph->LowField = tempField;   
         //cout << "Identifier = " <<tempGraph.Identifier << endl;
         //cout << "NumberSites = " << tempGraph.NumberSites << endl;
         //cout << "LatticeConstant = " <<tempGraph.LatticeConstant << endl;
@@ -1380,9 +1407,10 @@ void ReadGraphsFromFile( std::vector< Graph* > & graphList, const string file, b
         ss.clear();
 
         CurrentLine++;
+        ss << rawLines.at(CurrentLine);
         for(unsigned int CurrentSet = 0; CurrentSet < rawLines.at(CurrentLine).length()/2; CurrentSet++)
         {
-            if( field )
+            if( tempField )
             {
                 std::pair<int, int> First;
                 std::pair<int, int> Second;

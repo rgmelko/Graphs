@@ -27,6 +27,7 @@ class Graph
         int LatticeConstant;
         int Order;
         int Identifier;
+        bool LowField;
         std::vector< std::pair<int, int> > AdjacencyList;
         std::vector< std::pair<int, int> > SubgraphList;
 
@@ -242,8 +243,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & );
 */ 
 void FindSubgraphs(std::vector< SiteGraph > & ); 
 
-//void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
-void ReadGraphsFromFile(std::vector< Graph* > & , string , bool );
+void ReadGraphsFromFile(std::vector< Graph* > & , string );
 void WriteGraphsToFile(std::vector< SiteGraph > & , string );
 void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string );
 void WriteGraphsToFile(std::vector< BondGraph > & , string );

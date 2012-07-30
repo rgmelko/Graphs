@@ -14,9 +14,9 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 10);
+    ConstructSiteBasedGraphs(testsites, 12);
     FindSubgraphs(testsites);
-    //WriteGraphsToFile(testsites, "12sitebased.dat");
+    WriteGraphsToFile(testsites, "12sitebased.dat");
     /*vector< vector< BondGraph > > testbonds;
     testbonds.resize(1);
     vector<pair< pair<int,int>, pair<int,int> > > BondList;
@@ -626,52 +626,53 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
             std::pair<int,int> NewSite;
             SiteGraph OldGraph = graphs.back().at(CurrentGraph);
             SiteGraph NewGraph;
-            #pragma omp parallel private(tid, NewSite, NewGraph, OldGraph) shared(NewGraphs, GlobalIdentifier) num_threads(OldGraph.Sites.size())
-            {    
+            omp_set_num_threads( CurrentOrder - 1 );
+            #pragma omp parallel private(tid, NewSite, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier)
+            {   
                 tid = omp_get_thread_num();
                 for( int i = 0; i < 4; i++ )
                 {
-                switch (tid % 4)
-                {
-                    case 0 :
-                        NewSite = std::make_pair( OldGraph.Sites.at( tid/4 ).first + 1, OldGraph.Sites.at( tid/4 ).second);
-                        break;
-                    case 1 :
-                        NewSite = std::make_pair(OldGraph.Sites.at( tid/4 ).first, OldGraph.Sites.at( tid/4 ).second + 1);
-                        break;
-                    case 2 :
-                        NewSite = std::make_pair(OldGraph.Sites.at( tid/4 ).first - 1, OldGraph.Sites.at( tid/4 ).second);
-                        break;
-                    case 3 :
-                        NewSite = std::make_pair(OldGraph.Sites.at( tid/4 ).first , OldGraph.Sites.at( tid/4 ).second - 1);
-                        break;
-                }
-            
-                if( !std::binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), NewSite))
-                {
-                    NewGraph = OldGraph;
-                    NewGraph.AddSite( NewSite.first, NewSite.second);
-                    NewGraph.Order = OldGraph.Order + 1;
-                    NewGraph.MakeCanonical();
-                    NewGraph.GenerateAdjacencyList();
-                    bool Exists = false;
-                    
-                    #pragma omp critical
+                    switch ( i )
                     {
-                        for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                        case 0 :
+                            NewSite = std::make_pair( OldGraph.Sites.at( tid ).first + 1, OldGraph.Sites.at( tid ).second);
+                            break;
+                        case 1 :
+                            NewSite = std::make_pair( OldGraph.Sites.at( tid ).first, OldGraph.Sites.at( tid ).second + 1);
+                            break;
+                        case 2 :
+                            NewSite = std::make_pair( OldGraph.Sites.at( tid ).first - 1, OldGraph.Sites.at( tid ).second);
+                            break;
+                        case 3 :
+                            NewSite = std::make_pair( OldGraph.Sites.at( tid ).first , OldGraph.Sites.at( tid ).second - 1);
+                            break;
+                    }
+            
+                    if( !std::binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), NewSite))
+                    {
+                        NewGraph = OldGraph;
+                        NewGraph.AddSite( NewSite.first, NewSite.second);
+                        NewGraph.Order = OldGraph.Order + 1;
+                        NewGraph.MakeCanonical();
+                        NewGraph.GenerateAdjacencyList();
+                        bool Exists = false;
+                        
+                        #pragma omp critical
                         {
-                            Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites );
-                            //Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
-                        }
-                        if( !Exists )
-                        {
-                            NewGraph.Identifier = ++GlobalIdentifier;
-                            NewGraph.FindLatticeConstant();
-                            NewGraph.LowField = false;
-                            NewGraphs.push_back( NewGraph );
+                            for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                            {
+                                Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites );
+                                //Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
+                            }
+                            if( !Exists )
+                            {
+                                NewGraph.Identifier = ++GlobalIdentifier;
+                                NewGraph.FindLatticeConstant();
+                                NewGraph.LowField = false;
+                                NewGraphs.push_back( NewGraph );
+                            }
                         }
                     }
-                }
                 }
             }
         }
@@ -905,7 +906,7 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
 {
     int tid;
     int gid;
-    int MaxSize = omp_get_thread_limit();
+    int MaxSize = omp_get_num_procs();
     for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.size(); CurrentGraphGroup++)
     {
         #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, GraphList) num_threads( MaxSize )
@@ -1012,32 +1013,33 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
     {
         int tid;
         int gid;
-        int MaxSize = omp_get_thread_limit();
+        int MaxSize = omp_get_num_procs();
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
-            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList) num_threads( MaxSize )
+            omp_set_num_threads( MaxSize );
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList)
             {
                 tid = omp_get_thread_num();
-                gid = tid + CurrentGraphGroup * MaxSize;
+                gid = tid + (CurrentGraphGroup * MaxSize);
                 if( (unsigned int) gid < GraphList.at(CurrentGraphHeight).size() )
                 {
 
-                    GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).Order, 0));
+                    GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back( std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).Order, 0) );
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {
                     
                         for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
                         {
                             std::vector< std::vector< std::pair< int, int> > > DistinctReps;
-                            DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at( gid ).Sites );
+                            DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at( CurrentCheckWidth ).Sites );
 
                             for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
                             {
                          
                                 Dihedral Transform(CurrentElement);
                                 std::vector< std::pair< int, int> > ThisRep = GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Sites;
-                                std::for_each(ThisRep.begin(), ThisRep.end(), Transform);
-                                std::sort(ThisRep.begin(), ThisRep.end());
+                                std::for_each( ThisRep.begin(), ThisRep.end(), Transform );
+                                std::sort( ThisRep.begin(), ThisRep.end() );
                                 bool GlobalShifted = false;
                                 for ( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++ )
                                 {
@@ -1053,7 +1055,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
             
                                     GlobalShifted = GlobalShifted || Shifted;
                                 }
-                                if (!GlobalShifted)
+                                if ( !GlobalShifted )
                                 {
                                     const std::pair< int, int> shift = std::make_pair(-ThisRep.front().first, -ThisRep.front().second);
                                     for( unsigned int CurrentSite = 0; CurrentSite < ThisRep.size(); CurrentSite++)

@@ -17,7 +17,7 @@ int main()
     for(unsigned int i = 1; i <= 8; i++)
     {
         ConstructSiteBasedGraphs(testsites, i);
-        FindSubgraphs(testsites);
+        FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
     }
     /*vector< vector< BondGraph > > testbonds;
@@ -1209,8 +1209,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
 
 void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned int Index)
 {
-    unsigned int CurrentGraphHeight = Index;
-    cout<<CurrentGraphHeight<<endl;
+    unsigned int CurrentGraphHeight = Index - 1;
     if ( CurrentGraphHeight < GraphList.size() ) 
     {
         int tid;
@@ -1442,7 +1441,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
 
 void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index)
 {
-    unsigned int CurrentGraphHeight = Index;
+    unsigned int CurrentGraphHeight = Index - 1;
     if( CurrentGraphHeight < GraphList.size() ) 
     {
         int tid;
@@ -1645,7 +1644,6 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
     ofstream Output;
     Output.open(File.c_str(), std::ios::app);
     const unsigned int CurrentWidth = Index - 1;
-    cout<<CurrentWidth<<endl;
     if( CurrentWidth < GraphList.size() )
     {
         for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)

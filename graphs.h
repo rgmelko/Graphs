@@ -27,6 +27,7 @@ class Graph
         int LatticeConstant;
         int Order;
         int Identifier;
+        bool LowField;
         std::vector< std::pair<int, int> > AdjacencyList;
         std::vector< std::pair<int, int> > SubgraphList;
 
@@ -168,6 +169,7 @@ class BondGraph : public Graph
         Applies each element of the relevant dihedral group to the graph, and determines how many of the results are distinct from each other (there is no way to add an integer to all coordinates and get the other graph).
         */
         void FindLatticeConstant();
+        int NumberSites();
         bool operator==(const BondGraph & );
         BondGraph & operator=(const BondGraph &);
 };
@@ -241,9 +243,13 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & );
 \param GraphList The list of graphs to extract subgraphs from
 */ 
 void FindSubgraphs(std::vector< SiteGraph > & ); 
+/*! \brief For each graph in a list, finds all other graphs in the list which are its subgraphs, and how many ways there are to embed each subgraph in the graph
 
-//void ReadGraphsFromFile(vector< Graph > & GraphList, const string & file);
-void ReadGraphsFromFile(std::vector< Graph* > & , string , bool );
+\param GraphList The list of graphs to extract subgraphs from
+*/ 
+void FindSubgraphs(std::vector< std::vector< BondGraph > > & );
+
+void ReadGraphsFromFile(std::vector< Graph* > & , string );
 void WriteGraphsToFile(std::vector< SiteGraph > & , string );
 void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string );
 void WriteGraphsToFile(std::vector< BondGraph > & , string );

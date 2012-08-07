@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <sstream>
 #include <cmath>
+#include "omp.h"
 
 using namespace std;
 
@@ -52,6 +53,8 @@ class Graph
         \returns A boolean - true if the descriptors are the same, false otherwise 
         */
         bool operator==(const Graph & );
+
+        int Valency( int Site);
 
 };
 
@@ -238,6 +241,14 @@ void ConstructRectangularSiteGraphs( std::vector< std::vector< SiteGraph > > & ,
 \param GraphList The list of graphs to extract subgraphs from
 */ 
 void FindSubgraphs(std::vector< std::vector< SiteGraph > > & );
+
+/*! \brief For each graph of a certain order in a list, finds all other graphs in the list which are its subgraphs, and how many ways there are to embed each subgraph in the graph
+
+\param GraphList The list of graphs to extract subgraphs from
+\param Index The order of the subset of graphs to find subgraphs for
+*/ 
+void FindSubgraphs(std::vector< std::vector< SiteGraph > > & , unsigned int );
+
 /*! \brief For each graph in a list, finds all other graphs in the list which are its subgraphs, and how many ways there are to embed each subgraph in the graph
 
 \param GraphList The list of graphs to extract subgraphs from
@@ -249,8 +260,17 @@ void FindSubgraphs(std::vector< SiteGraph > & );
 */ 
 void FindSubgraphs(std::vector< std::vector< BondGraph > > & );
 
+/*! \brief For each graph of a certain order in a list, finds all other graphs in the list which are its subgraphs, and how many ways there are to embed each subgraph in the graph
+
+\param GraphList The list of graphs to extract subgraphs from
+\param Index The order of the subset of graphs to find subgraphs for
+*/ 
+void FindSubgraphs(std::vector< std::vector< BondGraph > > & , unsigned int );
+
 void ReadGraphsFromFile(std::vector< Graph* > & , string );
 void WriteGraphsToFile(std::vector< SiteGraph > & , string );
 void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string );
+void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string , unsigned int );
 void WriteGraphsToFile(std::vector< BondGraph > & , string );
-void WriteGraphsToFile(std::vector< std::vector< BondGraph > > & GraphList, string file);
+void WriteGraphsToFile(std::vector< std::vector< BondGraph > > & , string );
+void WriteGraphsToFile(std::vector< std::vector< BondGraph > > & , string , unsigned int );

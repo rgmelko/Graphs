@@ -14,9 +14,9 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    ConstructSiteBasedGraphs(testsites, 12);
+    ConstructSiteBasedGraphs(testsites, 6);
     FindSubgraphs(testsites);
-    WriteGraphsToFile(testsites, "12sitebased.dat");
+    WriteGraphsToFile(testsites, "6sitebased.dat");
     */
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
@@ -45,6 +45,7 @@ int main()
     testbonds[1][0].LowField = true;
     testbonds[1][0].GenerateAdjacencyList();
     ConstructBondBasedGraphs(testbonds, 3);
+    
     /*for( unsigned int i = 0; i < testbonds.size(); i++)
     {
         for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
@@ -467,7 +468,6 @@ bool BondGraph::operator==( const BondGraph & other)
             std::sort(BondsCopy.begin(), BondsCopy.end());
             std::pair<int, int> shift1 = std::make_pair(this->Bonds.front().first.first - BondsCopy.front().first.first, this->Bonds.front().first.second - BondsCopy.front().first.second);
             std::pair<int, int> shift2 = std::make_pair(this->Bonds.front().second.first - BondsCopy.front().second.first, this->Bonds.front().second.second - BondsCopy.front().second.second);
-            //cout<<"Shifts equal: "<<(shift1 == shift2)<<endl;
             bool Isomorphic = shift1 == shift2;
             unsigned int CurrentBond = 0;
             while( Isomorphic && CurrentBond < BondsCopy.size())
@@ -852,16 +852,14 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
             BondGraph OldGraph = graphs.back().at(CurrentGraph);
-<<<<<<< HEAD
             for( unsigned int CurrentBond = 0; CurrentBond < OldGraph.Bonds.size(); CurrentBond++)
             {
-                std::pair< std::pair< int, int>, std::pair< int, int> >& ThisBond = OldGraph.Bonds.at(CurrentBond);
                 std::pair< std::pair< int, int>, std::pair< int, int> > NewBond;
                 std::pair< int, int> NewSite;
                 BondGraph NewGraph;
 
                 int tid;
-                #pragma omp parallel private(tid, NewSite, NewBond, NewGraph, OldGraph) shared(NewGraphs, GlobalIdentifier) num_threads(OldGraph.Bonds.size())
+                #pragma omp parallel private(tid, NewSite, NewBond, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier) num_threads(OldGraph.Bonds.size())
                 {
                     tid = omp_get_thread_num();
                     std::pair< std::pair< int, int>, std::pair< int, int> >& ThisBond = OldGraph.Bonds.at( tid );
@@ -952,7 +950,6 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                     
                         if( !std::binary_search( OldGraph.Bonds.begin(), OldGraph.Bonds.end(), NewBond))
                         {
-                            BondGraph NewGraph;
                             NewGraph = OldGraph;
                             NewGraph.AddBond( ThisBond.first, ThisBond.second);
                             NewGraph.Order = OldGraph.Order + 1;
@@ -991,12 +988,9 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
     {
         #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, GraphList) num_threads( MaxSize )
         {
-            for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
-    
             tid = omp_get_thread_num();
             gid = tid + CurrentGraphGroup * MaxSize;
             if ( (unsigned int) gid < GraphList.size() )
->>>>>>> openmp
             {
                 GraphList.at( gid ).SubgraphList.push_back(std::make_pair(GraphList.at( gid ).Order, 0));
     
@@ -1202,105 +1196,117 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
 {
     for( unsigned int CurrentGraphHeight = 1; CurrentGraphHeight < GraphList.size(); CurrentGraphHeight++) 
     {
-        for( unsigned int CurrentGraphWidth = 0; CurrentGraphWidth < GraphList.at(CurrentGraphHeight).size(); CurrentGraphWidth++) 
+        int tid;
+        int gid;
+        int MaxSize = omp_get_num_procs();
+        for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
-            GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).SubgraphList.push_back(std::make_pair(GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).NumberSites(), 0));
-            for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
+            omp_set_num_threads( MaxSize );
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList)
             {
-            
-                for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
+                tid = omp_get_thread_num();
+                gid = tid + (CurrentGraphGroup * MaxSize);
+                if( (unsigned int) gid < GraphList.at(CurrentGraphHeight).size() )
                 {
-                    vector< vector< std::pair< std::pair<int,int>, std::pair<int,int> > > > DistinctReps;
-                    DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds );
-
-                    for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                    GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).NumberSites(), 0));
+                    for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {
-                         
-                        Dihedral Transform(CurrentElement);
-                        vector< std::pair< std::pair<int,int>, std::pair<int,int> > > ThisRep = GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds;
-                        for_each(ThisRep.begin(), ThisRep.end(), Transform);
-                        for(unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
+                    
+                        for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
                         {
-                            std::pair<int,int> Temp = ThisRep.at(CurrentBond).first;
-                            if( ThisRep.at(CurrentBond).first > ThisRep.at(CurrentBond).second)
-                            {
-                                ThisRep.at(CurrentBond).first = ThisRep.at(CurrentBond).second;
-                                ThisRep.at(CurrentBond).second = Temp;
-                            }
-                        }
-                        std::sort(ThisRep.begin(), ThisRep.end());
-                        bool GlobalShifted = false;
-                        for ( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++ )
-                        {
-                            const std::pair< int, int> shift1 = std::make_pair(DistinctReps.at(CurrentRep).front().first.first - ThisRep.front().first.first, DistinctReps.at(CurrentRep).front().first.second - ThisRep.front().first.second);
-                            const std::pair< int, int> shift2 = std::make_pair(DistinctReps.at(CurrentRep).front().second.first - ThisRep.front().second.first, DistinctReps.at(CurrentRep).front().second.second - ThisRep.front().second.second);
-                            bool Shifted = (shift1 == shift2);
-                            unsigned int CurrentBond = 1;
-                            while( Shifted && CurrentBond < DistinctReps.at(CurrentRep).size())
-                            {
-                                Shifted = Shifted && ((shift1.first == (DistinctReps.at(CurrentRep).at(CurrentBond).first.first - ThisRep.at(CurrentBond).first.first)) && (shift1.second == (DistinctReps.at(CurrentRep).at(CurrentBond).first.second - ThisRep.at(CurrentBond).first.second)));
-                                Shifted = Shifted && ((shift2.first == (DistinctReps.at(CurrentRep).at(CurrentBond).second.first - ThisRep.at(CurrentBond).second.first)) && (shift2.second == (DistinctReps.at(CurrentRep).at(CurrentBond).second.second - ThisRep.at(CurrentBond).second.second)));
-                                CurrentBond++;
-                            }
-            
-                            GlobalShifted = GlobalShifted || Shifted;
-                        }
-                        if (!GlobalShifted)
-                        {
-                            const std::pair< int, int> shift = std::make_pair(-ThisRep.front().first.first, -ThisRep.front().first.second);
-                            for( unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
-                            {
-                                ThisRep.at(CurrentBond).first.first += shift.first;
-                                ThisRep.at(CurrentBond).first.second += shift.second;
-                                ThisRep.at(CurrentBond).second.first += shift.first;
-                                ThisRep.at(CurrentBond).second.second += shift.second;
-                            }
-                            DistinctReps.push_back(ThisRep);
-                        }
-                    }
+                            vector< vector< std::pair< std::pair<int,int>, std::pair<int,int> > > > DistinctReps;
+                            DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds );
 
-                    //Now we have all distinct permutations of the graph!
-
-                    int Embeddings = 0;
-                    for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
-                    {
-                        std::pair< int, int> shift = std::make_pair(0,0);
-                        int xMax = 0;
-                        int xMin = 0; 
-                        int yMax = 0;
-                        int yMin = 0;
-                        for( unsigned int CurrentElement = 0; CurrentElement < GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.size(); CurrentElement++)
-                        {
-                            xMax = (GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).second.first > xMax) ? GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).second.first : xMax;
-                            yMax = (GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).second.second > yMax) ? GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).second.second : yMax;
-                            xMin = (GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).first.first < xMin) ? GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).first.first : xMin;
-                            yMin = (GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).first.second < yMin) ? GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.at(CurrentElement).first.second : yMin;
-                        }
-                        for( int xBoost = xMin; xBoost <= xMax; xBoost++)
-                        {
-                            for( int yBoost = yMin; yBoost <= yMax; yBoost++)
+                            for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
                             {
-                                shift = std::make_pair(xBoost, yBoost);
-                                vector< std::pair< std::pair<int, int>, std::pair<int, int> > > CheckList = DistinctReps.at(CurrentRep);
-                                unsigned int Counter = 0;
-                                for( unsigned int CurrentBond = 0; CurrentBond < DistinctReps.at(CurrentRep).size(); CurrentBond++)
+                                
+                                Dihedral Transform(CurrentElement);
+                                vector< std::pair< std::pair<int,int>, std::pair<int,int> > > ThisRep = GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds;
+                                for_each(ThisRep.begin(), ThisRep.end(), Transform);
+                                for(unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
                                 {
-                                    CheckList.at(CurrentBond).first.first += shift.first;
-                                    CheckList.at(CurrentBond).first.second += shift.second;
-                                    CheckList.at(CurrentBond).second.first += shift.first;
-                                    CheckList.at(CurrentBond).second.second += shift.second;
-                                    Counter += binary_search(GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.begin(), GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).Bonds.end(), CheckList.at(CurrentBond));
+                                    std::pair<int,int> Temp = ThisRep.at(CurrentBond).first;
+                                    if( ThisRep.at(CurrentBond).first > ThisRep.at(CurrentBond).second)
+                                    {
+                                        ThisRep.at(CurrentBond).first = ThisRep.at(CurrentBond).second;
+                                        ThisRep.at(CurrentBond).second = Temp;
+                                    }
                                 }
-                                if ( Counter == CheckList.size() )
+                                std::sort(ThisRep.begin(), ThisRep.end());
+                                bool GlobalShifted = false;
+                                for ( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++ )
                                 {
-                                    Embeddings++;
+                                    const std::pair< int, int> shift1 = std::make_pair(DistinctReps.at(CurrentRep).front().first.first - ThisRep.front().first.first, DistinctReps.at(CurrentRep).front().first.second - ThisRep.front().first.second);
+                                    const std::pair< int, int> shift2 = std::make_pair(DistinctReps.at(CurrentRep).front().second.first - ThisRep.front().second.first, DistinctReps.at(CurrentRep).front().second.second - ThisRep.front().second.second);
+                                    bool Shifted = (shift1 == shift2);
+                                    unsigned int CurrentBond = 1;
+                                    while( Shifted && CurrentBond < DistinctReps.at(CurrentRep).size())
+                                    {
+                                        Shifted = Shifted && ((shift1.first == (DistinctReps.at(CurrentRep).at(CurrentBond).first.first - ThisRep.at(CurrentBond).first.first)) && (shift1.second == (DistinctReps.at(CurrentRep).at(CurrentBond).first.second - ThisRep.at(CurrentBond).first.second)));
+                                        Shifted = Shifted && ((shift2.first == (DistinctReps.at(CurrentRep).at(CurrentBond).second.first - ThisRep.at(CurrentBond).second.first)) && (shift2.second == (DistinctReps.at(CurrentRep).at(CurrentBond).second.second - ThisRep.at(CurrentBond).second.second)));
+                                        CurrentBond++;
+                                    }
+                    
+                                    GlobalShifted = GlobalShifted || Shifted;
+                                }
+                                if (!GlobalShifted)
+                                {
+                                    const std::pair< int, int> shift = std::make_pair(-ThisRep.front().first.first, -ThisRep.front().first.second);
+                                    for( unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
+                                    {
+                                        ThisRep.at(CurrentBond).first.first += shift.first;
+                                        ThisRep.at(CurrentBond).first.second += shift.second;
+                                        ThisRep.at(CurrentBond).second.first += shift.first;
+                                        ThisRep.at(CurrentBond).second.second += shift.second;
+                                    }
+                                    DistinctReps.push_back(ThisRep);
                                 }
                             }
+
+                            //Now we have all distinct permutations of the graph!
+
+                            int Embeddings = 0;
+                            for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
+                            {
+                                std::pair< int, int> shift = std::make_pair(0,0);
+                                int xMax = 0;
+                                int xMin = 0; 
+                                int yMax = 0;
+                                int yMin = 0;
+                                for( unsigned int CurrentElement = 0; CurrentElement < GraphList.at(CurrentGraphHeight).at( gid ).Bonds.size(); CurrentElement++)
+                                {
+                                    xMax = (GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).second.first > xMax) ? GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).second.first : xMax;
+                                    yMax = (GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).second.second > yMax) ? GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).second.second : yMax;
+                                    xMin = (GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).first.first < xMin) ? GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).first.first : xMin;
+                                    yMin = (GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).first.second < yMin) ? GraphList.at(CurrentGraphHeight).at( gid ).Bonds.at(CurrentElement).first.second : yMin;
+                                }
+                                for( int xBoost = xMin; xBoost <= xMax; xBoost++)
+                                {
+                                    for( int yBoost = yMin; yBoost <= yMax; yBoost++)
+                                    {
+                                        shift = std::make_pair(xBoost, yBoost);
+                                        vector< std::pair< std::pair<int, int>, std::pair<int, int> > > CheckList = DistinctReps.at(CurrentRep);
+                                        unsigned int Counter = 0;
+                                        for( unsigned int CurrentBond = 0; CurrentBond < DistinctReps.at(CurrentRep).size(); CurrentBond++)
+                                        {
+                                            CheckList.at(CurrentBond).first.first += shift.first;
+                                            CheckList.at(CurrentBond).first.second += shift.second;
+                                            CheckList.at(CurrentBond).second.first += shift.first;
+                                            CheckList.at(CurrentBond).second.second += shift.second;
+                                            Counter += binary_search(GraphList.at(CurrentGraphHeight).at( gid ).Bonds.begin(), GraphList.at(CurrentGraphHeight).at( gid ).Bonds.end(), CheckList.at(CurrentBond));
+                                        }
+                                        if ( Counter == CheckList.size() )
+                                        {
+                                            Embeddings++;
+                                        }
+                                    }
+                                }
+                            }
+                            if (Embeddings > 0)
+                            {
+                                GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
+                            }
                         }
-                    }
-                    if (Embeddings > 0)
-                    {
-                        GraphList.at(CurrentGraphHeight).at(CurrentGraphWidth).SubgraphList.push_back(make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
                     }
                 }
             }

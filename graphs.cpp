@@ -1,10 +1,10 @@
 #include "graphs.h"
 
-int main()
+/*int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 2, 3);
-    /*vector< vector< SiteGraph > > testsites;
+    vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     std::vector< std::pair<int,int> > SiteList;
     SiteList.resize(1);
@@ -19,7 +19,7 @@ int main()
         ConstructSiteBasedGraphs(testsites, i);
         FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
-    }*/
+    }
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
     vector<std::pair< std::pair<int,int>, std::pair<int,int> > > BondList1;
@@ -49,16 +49,16 @@ int main()
     ConstructBondBasedGraphs(testbonds, 4);
     FindSubgraphs(testbonds);
     WriteGraphsToFile(testbonds, "4bondbased.dat");
-    /*for( unsigned int i = 0; i < testbonds.size(); i++)
+    for( unsigned int i = 0; i < testbonds.size(); i++)
     {
         for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
         {
             testbonds.at(i).at(j).PrintGraph();
         }
-    }*/
+    }
     return 0;
 
-}
+}*/
 
 Graph::Graph()
 {
@@ -1817,13 +1817,14 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
     }
     Output.close();
 }
-void ReadGraphsFromFile( std::vector< Graph* > & graphList, const string file)
-{
-    ifstream input(file.c_str());
-    std::vector< string > rawLines;
-    int MemberCount = 5;
 
-    while ( !input.eof() )
+void ReadGraphsFromFile( vector< Graph > & graphList, const string & file)
+{
+  ifstream input(file.c_str());
+  vector< string > rawLines;
+  Graph tempGraph;
+  
+  while ( !input.eof() )
     {
         rawLines.resize(rawLines.size() + 1);
         getline(input, rawLines.back()) ; 
@@ -1834,80 +1835,78 @@ void ReadGraphsFromFile( std::vector< Graph* > & graphList, const string file)
     //cout<<rawLines.size()<<endl;
 
     stringstream ss (stringstream::in | stringstream::out);
-    for( unsigned int CurrentGraph = 0; CurrentGraph*MemberCount < (rawLines.size()-1); CurrentGraph++)
-    {
-        Graph* tempGraph = new Graph;
-  
-        unsigned int CurrentLine = CurrentGraph*MemberCount;
-        string currentNumber;
 
-        ss << rawLines.at(CurrentLine);
+    for  (unsigned int currentLine = 0; currentLine < rawLines.size()-1; currentLine+=4)
+    {
+
+        string currentNumber;
+    
+        ss << rawLines.at(currentLine);
           
-        ss >> tempGraph->Identifier;
-        ss >> tempGraph->Order;
-        ss >> tempGraph->LatticeConstant;
-        ss >> tempGraph->LowField;
+        ss >> tempGraph.Identifier;
+        ss >> tempGraph.Order;
+	//    ss >> tempGraph.NumberBonds;
+        ss >> tempGraph.LatticeConstant;
+	ss >> tempGraph.LowField;
+           
+        //cout << "Identifier = " <<tempGraph.Identifier << endl;
+        //cout << "NumberSites = " << tempGraph.NumberSites << endl;
+        //cout << "LatticeConstant = " <<tempGraph.LatticeConstant << endl;
+        //cout << "LowField = " << tempGraph.LowField << endl;
 
         ss.str("");
         ss.clear();
 
-        CurrentLine += 2;
-        /*ss << rawLines.at(CurrentLine);
-        for(unsigned int CurrentSet = 0; CurrentSet < rawLines.at(CurrentLine).length()/2; CurrentSet++)
-        {
-            if( tempField )
-            {
-                std::pair<int, int> First;
-                std::pair<int, int> Second;
-                ss >> First.first;
-                ss >> First.second;
-                ss >> Second.first;
-                ss >> Second.second;
-                BondGraph* bGraph = (BondGraph*)tempGraph;
-                bGraph->Bonds.push_back(std::make_pair(First,Second));
-            }
-            else
-            {
-                int First;
-                int Second;
-                ss >> First;
-                ss >> Second;
-                SiteGraph* sGraph = (SiteGraph*)tempGraph;
-                sGraph->Sites.push_back(std::make_pair(First,Second));
-            }
+        //read in bonds
+        ss << rawLines.at(currentLine+2);   
+        int subSize(0);
+	string teststring;
+        while(!ss.eof()){
+	  ss >> teststring;
+	  subSize++;
+        }
+	int NumberBonds = subSize/2;
+        ss.str("");
+        ss.clear();
+	teststring="";
+        
+        ss << rawLines.at(currentLine+2);
+
+        tempGraph.AdjacencyList.resize(NumberBonds);
+        for(int b=0; b<NumberBonds;b++){
+          ss >> tempGraph.AdjacencyList[b].first;
+          ss >> tempGraph.AdjacencyList[b].second;
           //cout << tempGraph.AdjacencyList[b].first << "," <<tempGraph.AdjacencyList[b].second << endl;
         }
         ss.str("");
         ss.clear();
-        
-        CurrentLine++;*/
-        ss << rawLines.at(CurrentLine);
 
-        for(unsigned int CurrentBond = 0; CurrentBond < rawLines.at(CurrentLine).length()/2; CurrentBond++)
-        {
-            int First;
-            int Second;
-            ss >> First;
-            ss >> Second;
-            tempGraph->AdjacencyList.push_back(std::make_pair(First,Second));
-            //cout << tempGraph.AdjacencyList[b].first << "," <<tempGraph.AdjacencyList[b].second << endl;
+
+
+        //read in subclusters
+        ss << rawLines.at(currentLine+3);   
+
+        subSize=0;
+        while(!ss.eof()){
+            ss >> teststring;
+            subSize++;
         }
+        subSize/=2; // cout << subSize << endl;
+
         ss.str("");
         ss.clear();
-        
-        CurrentLine++;
-        ss << rawLines.at(CurrentLine);
-        for(unsigned int CurrentSubgraph = 0; CurrentSubgraph < rawLines.at(CurrentLine).length()/2; CurrentSubgraph++){
-            int First;
-            int Second;
-            ss >> First;
-            ss >> Second;
-            tempGraph->SubgraphList.push_back(std::make_pair(First, Second) );
+        ss << rawLines.at(currentLine+3);
+        tempGraph.SubgraphList.resize(subSize);
+        for(int b=0; b<subSize;b++){
+            ss >> tempGraph.SubgraphList[b].first;
+            ss >> tempGraph.SubgraphList[b].second;
+            //  cout << tempGraph.SubgraphList[b].first << "," <<tempGraph.SubgraphList[b].second << endl;
         }
 
         ss.str("");
         ss.clear();
 
         graphList.push_back(tempGraph);
+
     }   
 }

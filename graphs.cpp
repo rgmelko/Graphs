@@ -1001,7 +1001,7 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
     int MaxSize = omp_get_num_procs();
     for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.size(); CurrentGraphGroup++)
     {
-        #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, GraphList) num_threads( MaxSize )
+        #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup) num_threads( MaxSize )
         {
             tid = omp_get_thread_num();
             gid = tid + CurrentGraphGroup * MaxSize;
@@ -1108,7 +1108,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
             omp_set_num_threads( MaxSize );
-            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList)
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight)
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);
@@ -1218,7 +1218,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
             omp_set_num_threads( MaxSize );
-            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList)
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight)
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);
@@ -1327,7 +1327,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
             omp_set_num_threads( MaxSize );
-            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList)
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight)
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);
@@ -1450,7 +1450,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
             omp_set_num_threads( MaxSize );
-            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight, GraphList)
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, CurrentGraphHeight)
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);

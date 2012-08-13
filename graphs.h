@@ -267,7 +267,7 @@ void FindSubgraphs(std::vector< std::vector< BondGraph > > & );
 */ 
 void FindSubgraphs(std::vector< std::vector< BondGraph > > & , unsigned int );
 
-void ReadGraphsFromFile(std::vector< Graph* > & , string );
+void ReadGraphsFromFile(std::vector< Graph > & , const string & );
 void WriteGraphsToFile(std::vector< SiteGraph > & , string );
 void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string );
 void WriteGraphsToFile(std::vector< std::vector< SiteGraph > > & , string , unsigned int );

@@ -1,10 +1,10 @@
 #include "graphs.h"
 
-/*int main()
+int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 2, 3);
-    vector< vector< SiteGraph > > testsites;
+    /*vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     std::vector< std::pair<int,int> > SiteList;
     SiteList.resize(1);
@@ -19,7 +19,7 @@
         ConstructSiteBasedGraphs(testsites, i);
         FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
-    }
+    }*/
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
     vector<std::pair< std::pair<int,int>, std::pair<int,int> > > BondList1;
@@ -49,16 +49,16 @@
     ConstructBondBasedGraphs(testbonds, 4);
     FindSubgraphs(testbonds);
     WriteGraphsToFile(testbonds, "4bondbased.dat");
-    for( unsigned int i = 0; i < testbonds.size(); i++)
+    /*for( unsigned int i = 0; i < testbonds.size(); i++)
     {
         for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
         {
             testbonds.at(i).at(j).PrintGraph();
         }
-    }
+    }*/
     return 0;
 
-}*/
+}
 
 Graph::Graph()
 {
@@ -622,14 +622,14 @@ void BondGraph::GenerateAdjacencyList()
     std::vector< std::pair<int,int> >::iterator TrueEnd;
     TrueEnd = unique(SiteList.begin(), SiteList.end() );
     SiteList.resize( TrueEnd - SiteList.begin() );
-
+    this->AdjacencyList.resize(this->Bonds.size());
     for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
         std::vector< std::pair<int, int> >::iterator FirstSite;
         std::vector< std::pair<int, int> >::iterator SecondSite;
         FirstSite = std::find(SiteList.begin(), SiteList.end(), this->Bonds.at(CurrentBond).first);
         SecondSite = std::find(SiteList.begin(), SiteList.end(), this->Bonds.at(CurrentBond).second);
-        this->AdjacencyList.push_back(std::make_pair( FirstSite - SiteList.begin(), SecondSite - SiteList.begin() ) );
+        this->AdjacencyList[CurrentBond] = std::make_pair( FirstSite - SiteList.begin(), SecondSite - SiteList.begin() ) ;
     }
     std::sort( this->AdjacencyList.begin(), this->AdjacencyList.end());
 }
@@ -683,7 +683,14 @@ void BondGraph::FindLatticeConstant()
 
 int BondGraph::NumberSites()
 {
-    std::vector< std::pair<int,int> > Sites;
+    int max = 0;
+    for( unsigned int CurrentBond = 0; CurrentBond < this->AdjacencyList.size(); CurrentBond++)
+    {
+        max = (this->AdjacencyList[CurrentBond].first > max) ? this->AdjacencyList[CurrentBond].first : max;
+        max = (this->AdjacencyList[CurrentBond].second > max) ? this->AdjacencyList[CurrentBond].second : max;
+    }
+    max++;
+    /*std::vector< std::pair<int,int> > Sites;
     Sites.push_back(this->Bonds[0].first);
     for( unsigned int CurrentBond = 1; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
@@ -695,8 +702,8 @@ int BondGraph::NumberSites()
         {
             Sites.push_back(Bonds[CurrentBond].second);
         }
-    }
-    return (int) Sites.size();
+    }*/
+    return max;
 }
 
 void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, int FinalOrder)
@@ -968,7 +975,6 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                             NewGraph.AddBond( NewBond.first, NewBond.second);
                             NewGraph.Order = OldGraph.Order + 1;
                             NewGraph.MakeCanonical();
-                            NewGraph.GenerateAdjacencyList();
                             bool Exists = false;
                             #pragma omp critical
                             {
@@ -980,6 +986,7 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                                 {
                                     NewGraph.Identifier = ++GlobalIdentifier;
                                     NewGraph.FindLatticeConstant();
+                                    NewGraph.GenerateAdjacencyList();
                                     NewGraph.LowField = true;
                                     NewGraphs.push_back( NewGraph );
                                 }
@@ -1759,9 +1766,9 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
             Output<<endl;
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
-                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).first;
-                Output<<" ";
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
+                Output<<" ";
+                Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).first;
                 Output<<" ";
             } 
             Output<<endl;

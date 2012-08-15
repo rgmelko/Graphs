@@ -1,10 +1,12 @@
 #include "graphs.h"
 
-int main()
+//! \file graphs.cpp The main source file for the Graphs project
+
+/*int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 2, 3);
-    /*vector< vector< SiteGraph > > testsites;
+    vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     std::vector< std::pair<int,int> > SiteList;
     SiteList.resize(1);
@@ -19,7 +21,7 @@ int main()
         ConstructSiteBasedGraphs(testsites, i);
         FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
-    }*/
+    }
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
     vector<std::pair< std::pair<int,int>, std::pair<int,int> > > BondList1;
@@ -46,19 +48,19 @@ int main()
     testbonds[1][0].Identifier = 1;
     testbonds[1][0].LowField = true;
     testbonds[1][0].GenerateAdjacencyList();
-    ConstructBondBasedGraphs(testbonds, 4);
+    ConstructBondBasedGraphs(testbonds, 9);
     FindSubgraphs(testbonds);
-    WriteGraphsToFile(testbonds, "4bondbased.dat");
-    /*for( unsigned int i = 0; i < testbonds.size(); i++)
+    WriteGraphsToFile(testbonds, "order9bondbased.dat");
+    for( unsigned int i = 0; i < testbonds.size(); i++)
     {
         for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
         {
             testbonds.at(i).at(j).PrintGraph();
         }
-    }*/
+    }
     return 0;
 
-}
+}*/
 
 Graph::Graph()
 {
@@ -68,15 +70,24 @@ Graph::Graph()
     SubgraphList.clear();
 }
 
-Graph::Graph(int IdentNumber, int order, int LattConst, std::vector< std::pair<int, int> > & subgraphs )
+Graph::Graph(int IdentNumber, int Order, int LatticeConst, std::vector< std::pair<int, int> > & Subgraphs )
 {
     Identifier = IdentNumber;
-    Order = order;
-    LatticeConstant = LattConst;
-    SubgraphList = subgraphs;
+    Order = Order;
+    LatticeConstant = LatticeConst;
+    SubgraphList = Subgraphs;
 }
 
-Graph& Graph::operator=( const Graph & other)
+Graph::Graph(int IdentNumber, int Order, int LatticeConst, std::vector< std::pair<int, int> > & Adjacency, std::vector< std::pair<int, int> > & Subgraphs )
+{
+    Identifier = IdentNumber;
+    Order = Order;
+    LatticeConstant = LatticeConst;
+    AdjacencyList = Adjacency;
+    SubgraphList = Subgraphs;
+}
+
+Graph& Graph::operator=( const Graph & Other)
 {
     this->Order = other.Order;
     this->LatticeConstant = other.LatticeConstant;
@@ -84,7 +95,7 @@ Graph& Graph::operator=( const Graph & other)
     return *this;
 }
 
-bool Graph::operator==( const Graph & other)
+bool Graph::operator==( const Graph & Other)
 {
     return (( this->Order == other.Order) &&
            ( this->LatticeConstant == other.LatticeConstant) );
@@ -112,16 +123,16 @@ SiteGraph::SiteGraph()
     SubgraphList.clear();
 }
 
-SiteGraph::SiteGraph(std::vector<std::pair <int, int> > & siteList, int IdentNumber, int order, int LattConst, std::vector< std::pair<int, int> > & subgraphs )
+SiteGraph::SiteGraph(std::vector<std::pair <int, int> > & SiteList, int IdentNumber, int SiteCount, int LatticeConst, std::vector< std::pair<int, int> > & Subgraphs )
 {
     Identifier = IdentNumber;
-    Order = order;
-    LatticeConstant = LattConst;
-    SubgraphList = subgraphs;
-    Sites = siteList;
+    Order = SiteCount;
+    LatticeConstant = LatticeConst;
+    SubgraphList = Subgraphs;
+    Sites = SiteList;
 }
 
-SiteGraph& SiteGraph::operator=( const SiteGraph & other)
+SiteGraph& SiteGraph::operator=( const SiteGraph & Other)
 {
     this->Order = other.Order;
     this->LatticeConstant = other.LatticeConstant;
@@ -184,16 +195,20 @@ void SiteGraph::PrintGraph()
 
 void SiteGraph::FindLatticeConstant()
 {
+    //! [Site lattice constant copy]
     std::vector< std::vector< std::pair<int,int> > > SiteLists;
-    //sort(this->Sites.begin(), this->Sites.end());
     SiteLists.push_back(this->Sites);
     int Counter = 1;
+    //! [Site lattice constant copy]
+    //! [Site lattice constant dihedral transform]
     for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
     {
         std::vector< std::pair<int,int> > TempSites = this->Sites;
         Dihedral Transform(CurrentElement);
         std::for_each(TempSites.begin(), TempSites.end(), Transform);
         std::sort(TempSites.begin(), TempSites.end());
+        //! [Site lattice constant dihedral transform]
+        //! [Site lattice constant shift check]
         bool GlobalShifted = false;
         for ( unsigned int CurrentList = 0; CurrentList < SiteLists.size(); CurrentList++ )
         {
@@ -209,11 +224,14 @@ void SiteGraph::FindLatticeConstant()
             
             GlobalShifted = GlobalShifted || Shifted;
         }
+        //! [Site lattice constant shift check]
+        //! [Site lattice constant new rep]
         if (!GlobalShifted)
         {
             SiteLists.push_back(TempSites);
             Counter++;
         }
+        //! [Site lattice constant new rep]
     }
 
     this->LatticeConstant = Counter;
@@ -224,9 +242,9 @@ Dihedral::Dihedral()
     element = 0;
 }
 
-Dihedral::Dihedral(int factor)
+Dihedral::Dihedral(int Factor)
 {
-    element = factor;
+    element = Factor;
 }
 
 void Dihedral::operator()(std::pair<int, int> & Coordinates)
@@ -334,17 +352,20 @@ void Dihedral::operator()(std::pair< std::pair<int, int>, std::pair<int,int> > &
     }
 }
 
-bool SiteGraph::operator==(const SiteGraph & other)
+bool SiteGraph::operator==(const SiteGraph & Other)
 {
     if( ( other.LatticeConstant == this->LatticeConstant) &&
         ( other.Order == this->Order) )
     {
         for( int currentFactor = 0; currentFactor < 8; currentFactor++)
         {
+            //! [Site isomorphism copy and transform]
             std::vector< std::pair< int, int> > SitesCopy = other.Sites;
             Dihedral Transform(currentFactor);
             std::for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
             std::sort(SitesCopy.begin(), SitesCopy.end());
+            //! [Site isomorphism copy and transform]
+            //! [Site isomorphism shift check]
             bool Isomorphic = true; 
             const std::pair<int,int> shift = std::make_pair(this->Sites.front().first - SitesCopy.front().first, this->Sites.front().second - SitesCopy.front().second);
             unsigned int CurrentSite = 0;
@@ -361,6 +382,7 @@ bool SiteGraph::operator==(const SiteGraph & other)
             {
                 return true;
             }
+            //! [Site isomorphism shift check]
         }
         return false;
     }
@@ -390,28 +412,30 @@ int SiteGraph::SiteDegree(int xIndex, int yIndex)
 
 void SiteGraph::MakeCanonical()
 {
-    //int GlobalGraphKey = 0;
+    //! [Creating site canonical storage]
     std::vector< std::pair<int,int> > CanonicalSites;
-
+    //! [Creating site canonical storage]
+    //! [Transforming site canonical with Dihedral]
     for( int currentFactor = 0; currentFactor < 8; currentFactor++)
     {
-        //int LocalGraphKey = 0;
         std::vector< std::pair<int,int> > SitesCopy = this->Sites;
+
         Dihedral Transform(currentFactor);
         std::for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
         std::sort(SitesCopy.begin(), SitesCopy.end());
+        //! [Transforming site canonical with Dihedral]
+        //! [Shifting site canonical]
         std::pair<int,int> shift = std::make_pair(-SitesCopy.front().first, -SitesCopy.front().second);
         for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
         {
             SitesCopy.at(CurrentSite) = std::make_pair(SitesCopy.at(CurrentSite).first + shift.first, SitesCopy.at(CurrentSite).second + shift.second);
-            //LocalGraphKey += SitesCopy.at(CurrentSite).first*this->Order + SitesCopy.at(CurrentSite).second;
         }
-        //if( LocalGraphKey > GlobalGraphKey )
+        
         if( lexicographical_compare(CanonicalSites.begin(), CanonicalSites.end(), SitesCopy.begin(), SitesCopy.end() ) )
         {
-            //GlobalGraphKey = LocalGraphKey;
             CanonicalSites = SitesCopy;
         }
+        //! [Shifting site canonical]
     }
     this->Sites = CanonicalSites;
 }
@@ -443,16 +467,16 @@ BondGraph::BondGraph()
     SubgraphList.clear();
 }
 
-BondGraph::BondGraph(std::vector< std::pair< std::pair <int, int>, std::pair<int, int> > > & bondList, int IdentNumber, int order, int LattConst, std::vector< std::pair< int, int > > & subgraphs )
+BondGraph::BondGraph(std::vector< std::pair< std::pair <int, int>, std::pair<int, int> > > & BondList, int IdentNumber, int Order, int LatticeConst, std::vector< std::pair< int, int > > & Subgraphs )
 {
     Identifier = IdentNumber;
-    Order = order;
-    LatticeConstant = LattConst;
-    SubgraphList = subgraphs;
-    Bonds = bondList;
+    Order = Order;
+    LatticeConstant = LatticeConst;
+    SubgraphList = Subgraphs;
+    Bonds = BondList;
 }
 
-BondGraph& BondGraph::operator=( const BondGraph & other)
+BondGraph& BondGraph::operator=( const BondGraph & Other)
 {
     this->Order = other.Order;
     this->LatticeConstant = other.LatticeConstant;
@@ -461,12 +485,13 @@ BondGraph& BondGraph::operator=( const BondGraph & other)
     return *this;
 }
 
-bool BondGraph::operator==( const BondGraph & other)
+bool BondGraph::operator==( const BondGraph & Other)
 {
     if( (other.Order == this->Order) )
     {
         for( int currentFactor = 0; currentFactor < 8; currentFactor++)
         {
+            //! [Bond isomorphism copy and transform]
             std::vector< std::pair< std::pair< int, int>, std::pair< int, int> > > BondsCopy = other.Bonds;
             Dihedral Transform(currentFactor);
             std::for_each(BondsCopy.begin(), BondsCopy.end(), Transform);
@@ -480,6 +505,8 @@ bool BondGraph::operator==( const BondGraph & other)
                 }
             }
             std::sort(BondsCopy.begin(), BondsCopy.end());
+            //! [Bond isomorphism copy and transform]
+            //! [Bond isomorphism shift check]
             std::pair<int, int> shift1 = std::make_pair(this->Bonds.front().first.first - BondsCopy.front().first.first, this->Bonds.front().first.second - BondsCopy.front().first.second);
             std::pair<int, int> shift2 = std::make_pair(this->Bonds.front().second.first - BondsCopy.front().second.first, this->Bonds.front().second.second - BondsCopy.front().second.second);
             bool Isomorphic = shift1 == shift2;
@@ -492,17 +519,9 @@ bool BondGraph::operator==( const BondGraph & other)
             }
             if (Isomorphic)
             {
-                /*for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
-                {
-                    pair<int,int> Temp = BondsCopy.at(CurrentBond).first;
-                    if( BondsCopy.at(CurrentBond).first <= BondsCopy.at(CurrentBond).second)
-                    {
-                        BondsCopy.at(CurrentBond).first = BondsCopy.at(CurrentBond).second;
-                        BondsCopy.at(CurrentBond).second = Temp;
-                    }
-                }*/
                 return true;
             }
+            //! [Bond isomorphism shift check]
         }
         return false;
     }
@@ -512,29 +531,29 @@ bool BondGraph::operator==( const BondGraph & other)
     }
 }
 
-void BondGraph::AddBond(std::pair<int, int> firstSite, std::pair<int, int> secondSite )
+void BondGraph::AddBond(std::pair<int, int> FirstSite, std::pair<int, int> SecondSite )
 {
     unsigned int InsertCounter = 0;
-    while ( InsertCounter < this->Bonds.size() && this->Bonds.at(InsertCounter).first <= firstSite && this->Bonds.at(InsertCounter).second <= secondSite )
+    while ( InsertCounter < this->Bonds.size() && this->Bonds.at(InsertCounter).first <= FirstSite && this->Bonds.at(InsertCounter).second <= SecondSite )
     {
         InsertCounter++;
     }
-    this->Bonds.insert( this->Bonds.begin() + InsertCounter, std::make_pair(firstSite, secondSite));
+    this->Bonds.insert( this->Bonds.begin() + InsertCounter, std::make_pair(FirstSite, SecondSite));
 }
 
-void BondGraph::RemoveBond( std::pair<int, int> firstSite, std::pair<int, int> secondSite)
+void BondGraph::RemoveBond( std::pair<int, int> FirstSite, std::pair<int, int> SecondSite)
 {
     unsigned int EraseCounter = 0;
-    while ( this->Bonds.at(EraseCounter).first <= firstSite && this->Bonds.at(EraseCounter).second <= secondSite && EraseCounter< this->Bonds.size())
+    while ( this->Bonds.at(EraseCounter).first <= FirstSite && this->Bonds.at(EraseCounter).second <= SecondSite && EraseCounter< this->Bonds.size())
     {
         EraseCounter++;
     }
     this->Bonds.erase( this->Bonds.begin() + EraseCounter);
 }
 
-bool BondGraph::CheckForBond(std::pair<int,int> firstSite, std::pair<int,int> secondSite)
+bool BondGraph::CheckForBond(std::pair<int,int> FirstSite, std::pair<int,int> SecondSite)
 {
-    std::pair< std::pair< int, int>, std::pair< int, int> > TempBond = std::make_pair(firstSite, secondSite); 
+    std::pair< std::pair< int, int>, std::pair< int, int> > TempBond = std::make_pair(FirstSite, SecondSite); 
 
     return std::binary_search(this->Bonds.begin(), this->Bonds.end(), TempBond);
 }
@@ -575,8 +594,10 @@ void BondGraph::PrintGraph()
 void BondGraph::MakeCanonical()
 {
     int GlobalGraphKey = 0;
+    //! [Bond canonical storage]
     std::vector<std::pair< std::pair<int,int>, std::pair<int,int> > > CanonicalBonds;
-
+    //! [Bond canonical storage]
+    //! [Bond canonical transform] 
     for( int currentFactor = 0; currentFactor < 8; currentFactor++)
     {
         int LocalGraphKey = 0;
@@ -593,6 +614,8 @@ void BondGraph::MakeCanonical()
             }
         }
         std::sort(BondsCopy.begin(), BondsCopy.end());
+        //! [Bond canonical transform]
+        //! [Bond canonical shift]
         std::pair<int,int> shift = std::make_pair(-BondsCopy.front().first.first, -BondsCopy.front().first.second);
         for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
         {
@@ -606,12 +629,14 @@ void BondGraph::MakeCanonical()
             GlobalGraphKey = LocalGraphKey;
             CanonicalBonds = BondsCopy;
         }
+        //! [Bond canonical shift]
     }
     this->Bonds = CanonicalBonds;
 }
 
 void BondGraph::GenerateAdjacencyList()
 {
+    //! [Bond adjacency copy]
     std::vector< std::pair<int, int> > SiteList;
     for(unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
@@ -623,6 +648,8 @@ void BondGraph::GenerateAdjacencyList()
     TrueEnd = unique(SiteList.begin(), SiteList.end() );
     SiteList.resize( TrueEnd - SiteList.begin() );
     this->AdjacencyList.resize(this->Bonds.size());
+    //! [Bond adjacency copy]
+    //! [Bond adjacency fill list]
     for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
         std::vector< std::pair<int, int> >::iterator FirstSite;
@@ -631,14 +658,18 @@ void BondGraph::GenerateAdjacencyList()
         SecondSite = std::find(SiteList.begin(), SiteList.end(), this->Bonds.at(CurrentBond).second);
         this->AdjacencyList[CurrentBond] = std::make_pair( FirstSite - SiteList.begin(), SecondSite - SiteList.begin() ) ;
     }
+    //! [Bond adjacency fill list]
     std::sort( this->AdjacencyList.begin(), this->AdjacencyList.end());
 }
 
 void BondGraph::FindLatticeConstant()
 {
+    //! [Bond lattice constant copy]
     std::vector< std::vector< std::pair< std::pair<int, int >, std::pair<int,int> > > > BondLists;
     BondLists.push_back(this->Bonds);
     int Counter = 1;
+    //! [Bond lattice constant copy]
+    //! [Bond lattice constant transform]
     for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
     {
         std::vector< std::pair< std::pair<int, int>, std::pair<int,int> > > TempBonds = this->Bonds;
@@ -654,6 +685,8 @@ void BondGraph::FindLatticeConstant()
             }
         }
         std::sort(TempBonds.begin(), TempBonds.end());
+        //! [Bond lattice constant transform]
+        //! [Bond lattice constant shift check]
         bool GlobalShifted = false;
         for ( unsigned int CurrentList = 0; CurrentList < BondLists.size(); CurrentList++ )
         {
@@ -670,11 +703,14 @@ void BondGraph::FindLatticeConstant()
             
             GlobalShifted = GlobalShifted || Shifted;
         }
+        //! [Bond lattice constant shift check]
+        //! [Bond lattice constant store]
         if (!GlobalShifted)
         {
             BondLists.push_back(TempBonds);
             Counter++;
         }
+        //! [Bond lattice constant store]
     }
 
     this->LatticeConstant = Counter;
@@ -690,19 +726,6 @@ int BondGraph::NumberSites()
         max = (this->AdjacencyList[CurrentBond].second > max) ? this->AdjacencyList[CurrentBond].second : max;
     }
     max++;
-    /*std::vector< std::pair<int,int> > Sites;
-    Sites.push_back(this->Bonds[0].first);
-    for( unsigned int CurrentBond = 1; CurrentBond < this->Bonds.size(); CurrentBond++)
-    {
-        if ( !binary_search(Sites.begin(), Sites.end(), Bonds[CurrentBond].first) )
-        {
-            Sites.push_back(Bonds[CurrentBond].first);
-        }
-        if ( !binary_search(Sites.begin(), Sites.end(), Bonds[CurrentBond].second) )
-        {
-            Sites.push_back(Bonds[CurrentBond].second);
-        }
-    }*/
     return max;
 }
 
@@ -872,7 +895,6 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
         NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
-            cout<<GlobalIdentifier<<endl;
             BondGraph OldGraph = graphs.back().at(CurrentGraph);
             for( unsigned int CurrentBond = 0; CurrentBond < OldGraph.Bonds.size(); CurrentBond++)
             {
@@ -1825,9 +1847,9 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
     Output.close();
 }
 
-void ReadGraphsFromFile( vector< Graph > & graphList, const string & file)
+void ReadGraphsFromFile( vector< Graph > & GraphList, const string & File)
 {
-  ifstream input(file.c_str());
+  ifstream input(File.c_str());
   vector< string > rawLines;
   Graph tempGraph;
   
@@ -1913,7 +1935,7 @@ void ReadGraphsFromFile( vector< Graph > & graphList, const string & file)
         ss.str("");
         ss.clear();
 
-        graphList.push_back(tempGraph);
+        GraphList.push_back(tempGraph);
 
     }   
 }

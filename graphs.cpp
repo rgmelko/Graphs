@@ -2,11 +2,11 @@
 
 //! \file graphs.cpp The main source file for the Graphs project
 
-/*int main()
+int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 2, 3);
-    vector< vector< SiteGraph > > testsites;
+    /*vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     std::vector< std::pair<int,int> > SiteList;
     SiteList.resize(1);
@@ -22,6 +22,7 @@
         FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
     }
+    */
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
     vector<std::pair< std::pair<int,int>, std::pair<int,int> > > BondList1;
@@ -48,19 +49,12 @@
     testbonds[1][0].Identifier = 1;
     testbonds[1][0].LowField = true;
     testbonds[1][0].GenerateAdjacencyList();
-    ConstructBondBasedGraphs(testbonds, 9);
+    ConstructBondBasedGraphs(testbonds, 4);
     FindSubgraphs(testbonds);
-    WriteGraphsToFile(testbonds, "order9bondbased.dat");
-    for( unsigned int i = 0; i < testbonds.size(); i++)
-    {
-        for( unsigned int j = 0; j < testbonds.at(i).size(); j++)
-        {
-            testbonds.at(i).at(j).PrintGraph();
-        }
-    }
+    WriteGraphsToFile(testbonds, "test4bondbased.dat");
     return 0;
 
-}*/
+}
 
 Graph::Graph()
 {
@@ -70,18 +64,18 @@ Graph::Graph()
     SubgraphList.clear();
 }
 
-Graph::Graph(int IdentNumber, int Order, int LatticeConst, std::vector< std::pair<int, int> > & Subgraphs )
+Graph::Graph(int IdentNumber, int ElementCount, int LatticeConst, std::vector< std::pair<int, int> > & Subgraphs )
 {
     Identifier = IdentNumber;
-    Order = Order;
+    Order = ElementCount;
     LatticeConstant = LatticeConst;
     SubgraphList = Subgraphs;
 }
 
-Graph::Graph(int IdentNumber, int Order, int LatticeConst, std::vector< std::pair<int, int> > & Adjacency, std::vector< std::pair<int, int> > & Subgraphs )
+Graph::Graph(int IdentNumber, int ElementCount, int LatticeConst, std::vector< std::pair<int, int> > & Adjacency, std::vector< std::pair<int, int> > & Subgraphs )
 {
     Identifier = IdentNumber;
-    Order = Order;
+    Order = ElementCount;
     LatticeConstant = LatticeConst;
     AdjacencyList = Adjacency;
     SubgraphList = Subgraphs;
@@ -89,16 +83,16 @@ Graph::Graph(int IdentNumber, int Order, int LatticeConst, std::vector< std::pai
 
 Graph& Graph::operator=( const Graph & Other)
 {
-    this->Order = other.Order;
-    this->LatticeConstant = other.LatticeConstant;
-    this->SubgraphList = other.SubgraphList;
+    this->Order = Other.Order;
+    this->LatticeConstant = Other.LatticeConstant;
+    this->SubgraphList = Other.SubgraphList;
     return *this;
 }
 
 bool Graph::operator==( const Graph & Other)
 {
-    return (( this->Order == other.Order) &&
-           ( this->LatticeConstant == other.LatticeConstant) );
+    return (( this->Order == Other.Order) &&
+           ( this->LatticeConstant == Other.LatticeConstant) );
 }
 
 int Graph::Valency( int Site )
@@ -134,10 +128,10 @@ SiteGraph::SiteGraph(std::vector<std::pair <int, int> > & SiteList, int IdentNum
 
 SiteGraph& SiteGraph::operator=( const SiteGraph & Other)
 {
-    this->Order = other.Order;
-    this->LatticeConstant = other.LatticeConstant;
-    this->SubgraphList = other.SubgraphList;
-    this->Sites = other.Sites;
+    this->Order = Other.Order;
+    this->LatticeConstant = Other.LatticeConstant;
+    this->SubgraphList = Other.SubgraphList;
+    this->Sites = Other.Sites;
     return *this;
 }
 
@@ -354,13 +348,13 @@ void Dihedral::operator()(std::pair< std::pair<int, int>, std::pair<int,int> > &
 
 bool SiteGraph::operator==(const SiteGraph & Other)
 {
-    if( ( other.LatticeConstant == this->LatticeConstant) &&
-        ( other.Order == this->Order) )
+    if( ( Other.LatticeConstant == this->LatticeConstant) &&
+        ( Other.Order == this->Order) )
     {
         for( int currentFactor = 0; currentFactor < 8; currentFactor++)
         {
             //! [Site isomorphism copy and transform]
-            std::vector< std::pair< int, int> > SitesCopy = other.Sites;
+            std::vector< std::pair< int, int> > SitesCopy = Other.Sites;
             Dihedral Transform(currentFactor);
             std::for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
             std::sort(SitesCopy.begin(), SitesCopy.end());
@@ -374,9 +368,9 @@ bool SiteGraph::operator==(const SiteGraph & Other)
                 Isomorphic = (Isomorphic) && (shift.first == (this->Sites.at(CurrentSite).first - SitesCopy.at(CurrentSite).first)) && (shift.second == (this->Sites.at(CurrentSite).second - SitesCopy.at(CurrentSite).second ));
                 CurrentSite++;
             }
-            if (this->AdjacencyList.size() > 0 && other.AdjacencyList.size() > 0)
+            if (this->AdjacencyList.size() > 0 && Other.AdjacencyList.size() > 0)
             {
-                Isomorphic = Isomorphic || (this->AdjacencyList == other.AdjacencyList);
+                Isomorphic = Isomorphic || (this->AdjacencyList == Other.AdjacencyList);
             }
             if (Isomorphic)
             {
@@ -467,32 +461,32 @@ BondGraph::BondGraph()
     SubgraphList.clear();
 }
 
-BondGraph::BondGraph(std::vector< std::pair< std::pair <int, int>, std::pair<int, int> > > & BondList, int IdentNumber, int Order, int LatticeConst, std::vector< std::pair< int, int > > & Subgraphs )
+BondGraph::BondGraph(std::vector< std::pair< std::pair <int, int>, std::pair<int, int> > > & BondList, int IdentNumber, int BondNumber, int LatticeConst, std::vector< std::pair< int, int > > & Subgraphs )
 {
-    Identifier = IdentNumber;
-    Order = Order;
+    Identifier      = IdentNumber;
+    Order           = BondNumber;
     LatticeConstant = LatticeConst;
-    SubgraphList = Subgraphs;
-    Bonds = BondList;
+    SubgraphList    = Subgraphs;
+    Bonds           = BondList;
 }
 
 BondGraph& BondGraph::operator=( const BondGraph & Other)
 {
-    this->Order = other.Order;
-    this->LatticeConstant = other.LatticeConstant;
-    this->SubgraphList = other.SubgraphList;
-    this->Bonds = other.Bonds;
+    this->Order           = Other.Order;
+    this->LatticeConstant = Other.LatticeConstant;
+    this->SubgraphList    = Other.SubgraphList;
+    this->Bonds           = Other.Bonds;
     return *this;
 }
 
 bool BondGraph::operator==( const BondGraph & Other)
 {
-    if( (other.Order == this->Order) )
+    if( (Other.Order == this->Order) )
     {
         for( int currentFactor = 0; currentFactor < 8; currentFactor++)
         {
             //! [Bond isomorphism copy and transform]
-            std::vector< std::pair< std::pair< int, int>, std::pair< int, int> > > BondsCopy = other.Bonds;
+            std::vector< std::pair< std::pair< int, int>, std::pair< int, int> > > BondsCopy = Other.Bonds;
             Dihedral Transform(currentFactor);
             std::for_each(BondsCopy.begin(), BondsCopy.end(), Transform);
             for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
@@ -731,10 +725,11 @@ int BondGraph::NumberSites()
 
 void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, int FinalOrder)
 {
+    //! [Site grab back info]
     std::vector< SiteGraph > NewGraphs;
     int GlobalIdentifier = graphs.back().back().Identifier;
     int CurrentOrder = graphs.back().back().Order + 1;
-    
+    //! [Site grab back info]
     while (CurrentOrder <= FinalOrder)
     {
         cout<<"Current Order: "<<CurrentOrder<<" Current Global ID: "<<GlobalIdentifier<<endl;   
@@ -742,13 +737,16 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
             int tid;
+            //! [Site get graph ready]
             std::pair<int,int> NewSite;
             SiteGraph OldGraph = graphs.back().at(CurrentGraph);
             SiteGraph NewGraph;
+            //! [Site get graph ready]
             omp_set_num_threads( CurrentOrder - 1 );
             #pragma omp parallel private(tid, NewSite, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier)
             {   
                 tid = omp_get_thread_num();
+                //! [Site make new graph]
                 for( int i = 0; i < 4; i++ )
                 {
                     switch ( i )
@@ -774,10 +772,13 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                         NewGraph.Order = OldGraph.Order + 1;
                         NewGraph.MakeCanonical();
                         NewGraph.GenerateAdjacencyList();
+                        
+                        //! [Site make new graph]
                         bool Exists = false;
                         
                         #pragma omp critical
                         {
+                            //! [Site check new graph]
                             for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                             {
                                 Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites );
@@ -790,6 +791,7 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                                 NewGraph.LowField = false;
                                 NewGraphs.push_back( NewGraph );
                             }
+                            //! [Site check new graph]
                         }
                     }
                 }
@@ -886,136 +888,136 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
 
 void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, int FinalOrder)
 {
+    //! [Bond grab back info]
     std::vector< BondGraph > NewGraphs;
     int GlobalIdentifier = graphs.back().back().Identifier;
     int CurrentOrder = graphs.back().back().Order + 1;
+    //! [Bond grab back info]
     while (CurrentOrder <= FinalOrder)
     {
         cout<<CurrentOrder<<endl;
         NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
+            //! [Bond get graph ready]
             BondGraph OldGraph = graphs.back().at(CurrentGraph);
-            for( unsigned int CurrentBond = 0; CurrentBond < OldGraph.Bonds.size(); CurrentBond++)
+            std::pair< std::pair< int, int>, std::pair< int, int> > NewBond;
+            std::pair< int, int> NewSite;
+            BondGraph NewGraph;
+            //! [Bond get graph ready]
+            int tid;
+            #pragma omp parallel private(tid, NewSite, NewBond, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier) num_threads(OldGraph.Bonds.size())
             {
-                std::pair< std::pair< int, int>, std::pair< int, int> > NewBond;
-                std::pair< int, int> NewSite;
-                BondGraph NewGraph;
-
-                int tid;
-                #pragma omp parallel private(tid, NewSite, NewBond, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier) num_threads(OldGraph.Bonds.size())
+                tid = omp_get_thread_num();
+                for( int i = 0; i < 6; i++)
                 {
-                    tid = omp_get_thread_num();
-                    for( int i = 0; i < 6; i++)
+                        
+                    switch( i )
                     {
-                            
-                        switch( i )
-                        {
-                            case 0 :
-                                if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first, OldGraph.Bonds.at( tid ).first.second + 1);
-                                    NewBond = std::make_pair(OldGraph.Bonds.at( tid ).first, NewSite);
-                                } //Add a bond on the left, pointing up
-                                else 
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first, OldGraph.Bonds.at( tid ).second.second + 1);
-                                    NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
-                                } // Add a bond on the top, pointing up
-                                break;
-                            case 1 :
-                            
-                                if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first, OldGraph.Bonds.at( tid ).second.second + 1);
-                                    NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
-                                } //Add a bond on the right, pointing up
-                                else 
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first + 1, OldGraph.Bonds.at( tid ).second.second);
-                                    NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
-                                } // Add a bond on top, pointing right
-                                break;
-                            case 2 :
-                            
-                                if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first + 1, OldGraph.Bonds.at( tid ).second.second);
-                                    NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
-                                } // Add a bond on the right, pointing right
-                                else 
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first + 1, OldGraph.Bonds.at( tid ).first.second);
-                                    NewBond = std::make_pair(OldGraph.Bonds.at( tid ).first, NewSite);
-                                } // Add a bond on the bottom, pointing right
-                                break;
-                            case 3 : 
-                            
-                                if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first - 1, OldGraph.Bonds.at( tid ).first.second);
-                                    NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
-                                } // Add a bond on the left, pointing left
-                                else 
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first - 1, OldGraph.Bonds.at( tid ).second.second);
-                                    NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).second);
-                                } // Add a bond on the top, pointing left
-                                break;
-                            case 4 : 
-                            
-                                if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first, OldGraph.Bonds.at( tid ).first.second - 1);
-                                    NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
-                                } // Add a bond to the left, pointing down
-                                else 
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first - 1, OldGraph.Bonds.at( tid ).first.second);
-                                    NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
-                                } // Add a bond to the bottom, pointing left
-                                break;
-                            case 5 : 
-                            
-                                if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first, OldGraph.Bonds.at( tid ).second.second - 1);
-                                    NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).second);
-                                } // Add a bond to the right, pointing down
-                                else 
-                                {
-                                    NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first, OldGraph.Bonds.at( tid ).first.second - 1);
-                                    NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
-                                } // Add a bond to the bottom, pointing down
-                                break;
-
-                        }
-                    
-                        if( !std::binary_search( OldGraph.Bonds.begin(), OldGraph.Bonds.end(), NewBond))
-                        {
-                            NewGraph = OldGraph;
-                            NewGraph.AddBond( NewBond.first, NewBond.second);
-                            NewGraph.Order = OldGraph.Order + 1;
-                            NewGraph.MakeCanonical();
-                            bool Exists = false;
-                            #pragma omp critical
+                        case 0 :
+                            if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
                             {
-                                for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
-                                {
-                                    Exists = Exists || (NewGraph == NewGraphs.at(CurrentIndex) ); 
-                                }
-                                if( !Exists )
-                                {
-                                    NewGraph.Identifier = ++GlobalIdentifier;
-                                    NewGraph.FindLatticeConstant();
-                                    NewGraph.GenerateAdjacencyList();
-                                    NewGraph.LowField = true;
-                                    NewGraphs.push_back( NewGraph );
-                                }
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first, OldGraph.Bonds.at( tid ).first.second + 1);
+                                NewBond = std::make_pair(OldGraph.Bonds.at( tid ).first, NewSite);
+                            } //Add a bond on the left, pointing up
+                            else 
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first, OldGraph.Bonds.at( tid ).second.second + 1);
+                                NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
+                            } // Add a bond on the top, pointing up
+                            break;
+                        case 1 :
+                        
+                            if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first, OldGraph.Bonds.at( tid ).second.second + 1);
+                                NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
+                            } //Add a bond on the right, pointing up
+                            else 
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first + 1, OldGraph.Bonds.at( tid ).second.second);
+                                NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
+                            } // Add a bond on top, pointing right
+                            break;
+                        case 2 :
+                        
+                            if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first + 1, OldGraph.Bonds.at( tid ).second.second);
+                                NewBond = std::make_pair(OldGraph.Bonds.at( tid ).second, NewSite);
+                            } // Add a bond on the right, pointing right
+                            else 
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first + 1, OldGraph.Bonds.at( tid ).first.second);
+                                NewBond = std::make_pair(OldGraph.Bonds.at( tid ).first, NewSite);
+                            } // Add a bond on the bottom, pointing right
+                            break;
+                        case 3 : 
+                        
+                            if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first - 1, OldGraph.Bonds.at( tid ).first.second);
+                                NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
+                            } // Add a bond on the left, pointing left
+                            else 
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first - 1, OldGraph.Bonds.at( tid ).second.second);
+                                NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).second);
+                            } // Add a bond on the top, pointing left
+                            break;
+                        case 4 : 
+                        
+                            if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first, OldGraph.Bonds.at( tid ).first.second - 1);
+                                NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
+                            } // Add a bond to the left, pointing down
+                            else 
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first - 1, OldGraph.Bonds.at( tid ).first.second);
+                                NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
+                            } // Add a bond to the bottom, pointing left
+                            break;
+                        case 5 : 
+                        
+                            if( OldGraph.Bonds.at( tid ).first.first != OldGraph.Bonds.at( tid ).second.first ) //Bond is horizontal
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).second.first, OldGraph.Bonds.at( tid ).second.second - 1);
+                                NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).second);
+                            } // Add a bond to the right, pointing down
+                            else 
+                            {
+                                NewSite = std::make_pair(OldGraph.Bonds.at( tid ).first.first, OldGraph.Bonds.at( tid ).first.second - 1);
+                                NewBond = std::make_pair(NewSite, OldGraph.Bonds.at( tid ).first);
+                            } // Add a bond to the bottom, pointing down
+                            break;
+
+                    }
+                
+                    if( !std::binary_search( OldGraph.Bonds.begin(), OldGraph.Bonds.end(), NewBond))
+                    {
+                        NewGraph = OldGraph;
+                        NewGraph.AddBond( NewBond.first, NewBond.second);
+                        NewGraph.Order = OldGraph.Order + 1;
+                        NewGraph.MakeCanonical();
+                        bool Exists = false;
+                        #pragma omp critical
+                        {
+                            for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                            {
+                                Exists = Exists || (NewGraph == NewGraphs.at(CurrentIndex) ); 
+                            }
+                            if( !Exists )
+                            {
+                                NewGraph.Identifier = ++GlobalIdentifier;
+                                NewGraph.FindLatticeConstant();
+                                NewGraph.GenerateAdjacencyList();
+                                NewGraph.LowField = true;
+                                NewGraphs.push_back( NewGraph );
                             }
                         }
                     }
-                }   
+                }
             }
         }
         graphs.insert(graphs.end(), NewGraphs);

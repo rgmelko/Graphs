@@ -353,9 +353,26 @@ class Dihedral
 \param FinalOrder The maximum order of the graphs which will be generated
 
 Starting with a list of sites, the function adds sites north and east, eliminating raphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
-*/ 
-void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & , int );
 
+First, the highest order of graphs present in the list is grabbed and the identifying number to start from is grabbed as well. Temporary storage for the new graphs is allocated as well. 
+
+\snippet graphs.cpp Site grab back info
+
+For each order up until the last one, each old graph is copied (so that a good copy remains) and storage for a new graph and new site is created as well. 
+
+\snippet graphs.cpp Site get graph ready
+
+For each site, there are four possible positions to put a new site (north, east, south, west). For each possibility, the new site is generated, and then the function checks to see if it's already present in the site list. If not, it's a valid addition, and it's added to create a new site-based graph. The canonical form of the new graph is found and its adjacency list is generated so that we can see whether this new graph has already been generated.
+
+\snippet graphs.cpp Site make new graph 
+
+Now the function checks to make sure that this graph hasn't already been created, by comparing the site lists (this works because all graphs are in their unique canonical form). If the graph isn't already present, the identifier count is iterated and the graph is added into the list of all graphs.
+
+\snippet graphs.cpp Site check new graph
+
+*/ 
+
+void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & , int );
 
 /*! 
 
@@ -366,7 +383,24 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & , int );
 \param graphs A collection of graphs to start from, and to which the generated graphs will be appended
 \param FinalOrder The maximum order of the graphs which will be generated
 
-Starting with a list of sites, the function adds bonds north and east, eliminating raphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
+Starting with a list of sites, the function adds bonds north and east, eliminating graphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
+
+First, the highest order of graphs present in the list is grabbed and the identifying number to start from is grabbed as well. Temporary storage for the new graphs is allocated as well. 
+
+\snippet graphs.cpp Bond grab back info
+
+For each order up until the last one, each old graph is copied (so that a good copy remains) and storage for a new graph, new bond, and new site is created as well. 
+
+\snippet graphs.cpp Bond get graph ready
+
+For each site, there are four possible positions to put a new site (north, east, south, west). For each possibility, the new site is generated, and then the function checks to see if it's already present in the site list. If not, it's a valid addition, and it's added to create a new site-based graph. The canonical form of the new graph is found and its adjacency list is generated so that we can see whether this new graph has already been generated.
+
+\snippet graphs.cpp Site make new graph 
+
+Now the function checks to make sure that this graph hasn't already been created, by comparing the site lists (this works because all graphs are in their unique canonical form). If the graph isn't already present, the identifier count is iterated and the graph is added into the list of all graphs.
+
+\snippet graphs.cpp Site check new graph
+
 */ 
 void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & , int );
 

@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Graphs by rgmelko</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/rgmelko/Graphs">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/rgmelko/Graphs/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/rgmelko/Graphs/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Graphs</h1>
+          <p>Graph generation for quantum lattice models</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/rgmelko">rgmelko</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>Graphs</h1>
+
+<p>This code is intended to generate graphs for quantum lattice model simulations, specifically the Numerical Linked Cluster expansion method. It was developed by Katie Hyatt (<a href="https://github.com/kshyatt" class="user-mention">@kshyatt</a>), Ann Kallin (<a href="https://github.com/akallin" class="user-mention">@akallin</a>), and Roger Melko (<a href="https://github.com/rgmelko" class="user-mention">@rgmelko</a>). </p>
+
+<p>This code aims to generate all isomorphically and/or topologically distinct graphs on a variety of 2D lattices used in condensed matter simulations. We define two graphs as isomorphically distinct iff there is no transformation in the lattice's <a href="http://en.wikipedia.org/wiki/Dihedral_group">dihedral group</a> that can take one graph to the other. We say they are topologically distinct if the Hamiltonians for the two graphs will be different.</p>
+
+<h1>Installation</h1>
+
+<p>Since Graphs is ISO C++, it should work on any machine/OS which has a C++ compiler installed. You can use the included Makefile to compile graphs.cpp. g++ and icpc have been tested. Note that Graphs requires OpenMP, so you will need gcc 4.2 or greater, or icpc 10.1 or greater. </p>
+
+<h1>Running graphs</h1>
+
+<p>Graphs is intended to generate a variety of types of graphs needed for numerical condensed matter simulations. You can create site- and bond-based graphs. You can find detailed descriptions of these on the Graphs <a href="http://github.com/rgmelko/Graphs/wiki">wiki</a>. Since NLC is run on sets of self-consistent graphs, you can generate all site- or bond-based graphs, or only sets like "all rectangles". You will need to create a vector to store the graphs, and then call the appropriate function. graphs also contains utility functions to read/write the graphs to/from file. Here's an example where we generate site-based graphs:</p>
+
+<div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">SiteGraph</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">testsites</span><span class="p">;</span>
+<span class="n">testsites</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// Create a graph with one site to start from</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">SiteList</span><span class="p">;</span>
+<span class="n">SiteList</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">SiteList</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">first</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">SiteList</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">second</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// Put the first site at the origin</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">Empty</span><span class="p">;</span> <span class="c1">// The single-site graph has no subgraphs!</span>
+
+<span class="n">SiteGraph</span> <span class="n">Start</span><span class="p">(</span><span class="n">SiteList</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Empty</span><span class="p">);</span> <span class="c1">// Build the graph</span>
+
+<span class="n">testsites</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">testsites</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Start</span><span class="p">;</span> <span class="c1">//Put it into the vector</span>
+
+<span class="n">ConstructSiteBasedGraphs</span><span class="p">(</span><span class="n">testsites</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>         <span class="c1">// Generate all site-based graphs up to order 10 (10 sites)</span>
+<span class="n">FindSubgraphs</span><span class="p">(</span><span class="n">testsites</span><span class="p">);</span>                        <span class="c1">// Find the subgraphs of the graphs we just generated </span>
+<span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">testsites</span><span class="p">,</span> <span class="s">"10sitebased.dat"</span><span class="p">);</span> <span class="c1">// Write all the graphs we generated to disk</span>
+</pre></div>
+
+<p>Here's another, but this time we generate bond-based graphs:</p>
+
+<div class="highlight"><pre><span class="n">vector</span><span class="o">&lt;</span> <span class="n">vector</span><span class="o">&lt;</span> <span class="n">BondGraph</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">testbonds</span><span class="p">;</span>
+<span class="n">testbonds</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> <span class="c1">// Create space for a single-site graph and a single-bond graph - we need both for our simulation!</span>
+
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">BondList1</span><span class="p">;</span> 
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">BondList2</span><span class="p">;</span>
+<span class="n">BondList1</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">BondList2</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="n">BondList1</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">first</span><span class="p">.</span><span class="n">first</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">BondList1</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">first</span><span class="p">.</span><span class="n">second</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">BondList1</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">second</span><span class="p">.</span><span class="n">first</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">BondList1</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">second</span><span class="p">.</span><span class="n">second</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// The first graph is just one site at the origin</span>
+
+<span class="n">BondList2</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">first</span><span class="p">.</span><span class="n">first</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">BondList2</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">first</span><span class="p">.</span><span class="n">second</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">BondList2</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">second</span><span class="p">.</span><span class="n">first</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">BondList2</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">second</span><span class="p">.</span><span class="n">second</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// The second graph is a bond from the origin to (1,0)</span>
+
+<span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">Empty1</span><span class="p">;</span> <span class="c1">// The single site graph has no subgraphs</span>
+<span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">Empty2</span><span class="p">;</span> <span class="c1">// We'll fill this later using FindSubgraphs()</span>
+
+<span class="n">BondGraph</span> <span class="n">Start1</span><span class="p">(</span><span class="n">BondList1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Empty1</span><span class="p">);</span> 
+<span class="n">BondGraph</span> <span class="n">Start2</span><span class="p">(</span><span class="n">BondList2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Empty2</span><span class="p">);</span> <span class="c1">// Build graphs</span>
+
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Start1</span><span class="p">;</span>
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">LowField</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span> <span class="c1">// Put the single site graph into the vector</span>
+
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Start2</span><span class="p">;</span>
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">Identifier</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> 
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">LowField</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span> 
+<span class="n">testbonds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">GenerateAdjacencyList</span><span class="p">();</span> <span class="c1">// Put the single bond graph into the vector</span>
+
+<span class="n">ConstructBondBasedGraphs</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>         <span class="c1">// Generate all site-based graphs up to order 4 (4 bonds, up to 5 sites)</span>
+<span class="n">FindSubgraphs</span><span class="p">(</span><span class="n">testbonds</span><span class="p">);</span>                       <span class="c1">// Find the subgraphs of the graphs we just generated</span>
+<span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="s">"4bondbased.dat"</span><span class="p">);</span> <span class="c1">// Write all the graphs we generated to disk</span>
+</pre></div>
+
+<p>If you would like to generate a large number of graphs and are not sure how long this will take, you can try using versions of <code>FindSubgraphs</code> and <code>WriteGraphsToFile</code> that write only one order at a time - this way you can incrementally add to your resulting file and "save" your progress in the case that your job gets killed. To do that, initialise all the vectors as above, but we'll call the generation/subgraph/writing code a little differently this time:</p>
+
+<div class="highlight"><pre><span class="k">for</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="n">ConstructSiteBasedGraphs</span><span class="p">(</span><span class="n">testsites</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">FindSubgraphs</span><span class="p">(</span><span class="n">testsites</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">testsites</span><span class="p">,</span> <span class="s">"10sitebased.dat"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>Or, for the bonds example:</p>
+
+<div class="highlight"><pre><span class="k">for</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="n">ConstructBondBasedGraphs</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">FindSubgraphs</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="s">"10bondbased.dat"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>

@@ -1,25 +1,10 @@
 #include "graphs.h"
 
-//! \file graphs.cpp The main source file for the Graphs project
-
-/*!
-\author Katharine Hyatt
-\author Roger Melko
-\author Ann Kallin
-*/
-
-/*!
-\mainpage 
-
-This software is intended to be used to generate graphs for use in numerical physics simulations. It's designed to generate all site- or bond-based graphs up to some order which are embeddable in a particular two dimensional lattice, such as the square lattice, honeycomb lattice, or Kagome lattice. This documentation describes the \link Graph Graph \endlink class, which is used to represent and manipulate graphs, as well as the \link Dihedral Dihedral \endlink class, which is used to represent the symmetry relations of the lattice and operate on these graphs. It also describes functions for automatically generating graphs, finding their subgraphs, and performing I/O on them. This software is licensed under the MIT license, available in the LICENSE file in the git repo. 
-
-*/
-
-/*int main()
+int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 2, 3);
-    vector< vector< SiteGraph > > testsites;
+    /*vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     std::vector< std::pair<int,int> > SiteList;
     SiteList.resize(1);
@@ -35,7 +20,7 @@ This software is intended to be used to generate graphs for use in numerical phy
         FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
     }
-    
+    */
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
     vector<std::pair< std::pair<int,int>, std::pair<int,int> > > BondList1;
@@ -67,7 +52,7 @@ This software is intended to be used to generate graphs for use in numerical phy
     WriteGraphsToFile(testbonds, "test4bondbased.dat");
     return 0;
 
-}*/
+}
 
 Graph::Graph()
 {
@@ -202,15 +187,20 @@ void SiteGraph::PrintGraph()
 
 void SiteGraph::FindLatticeConstant()
 {
+    //! [Site lattice constant copy]
     std::vector< std::vector< std::pair<int,int> > > SiteLists;
     SiteLists.push_back(this->Sites);
     int Counter = 1;
+    //! [Site lattice constant copy]
+    //! [Site lattice constant dihedral transform]
     for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
     {
         std::vector< std::pair<int,int> > TempSites = this->Sites;
         Dihedral Transform(CurrentElement);
         std::for_each(TempSites.begin(), TempSites.end(), Transform);
         std::sort(TempSites.begin(), TempSites.end());
+        //! [Site lattice constant dihedral transform]
+        //! [Site lattice constant shift check]
         bool GlobalShifted = false;
         for ( unsigned int CurrentList = 0; CurrentList < SiteLists.size(); CurrentList++ )
         {
@@ -226,11 +216,14 @@ void SiteGraph::FindLatticeConstant()
             
             GlobalShifted = GlobalShifted || Shifted;
         }
+        //! [Site lattice constant shift check]
+        //! [Site lattice constant new rep]
         if (!GlobalShifted)
         {
             SiteLists.push_back(TempSites);
             Counter++;
         }
+        //! [Site lattice constant new rep]
     }
 
     this->LatticeConstant = Counter;
@@ -358,10 +351,13 @@ bool SiteGraph::operator==(const SiteGraph & Other)
     {
         for( int currentFactor = 0; currentFactor < 8; currentFactor++)
         {
+            //! [Site isomorphism copy and transform]
             std::vector< std::pair< int, int> > SitesCopy = Other.Sites;
             Dihedral Transform(currentFactor);
             std::for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
             std::sort(SitesCopy.begin(), SitesCopy.end());
+            //! [Site isomorphism copy and transform]
+            //! [Site isomorphism shift check]
             bool Isomorphic = true; 
             const std::pair<int,int> shift = std::make_pair(this->Sites.front().first - SitesCopy.front().first, this->Sites.front().second - SitesCopy.front().second);
             unsigned int CurrentSite = 0;
@@ -378,6 +374,7 @@ bool SiteGraph::operator==(const SiteGraph & Other)
             {
                 return true;
             }
+            //! [Site isomorphism shift check]
         }
         return false;
     }
@@ -407,7 +404,10 @@ int SiteGraph::SiteDegree(int xIndex, int yIndex)
 
 void SiteGraph::MakeCanonical()
 {
+    //! [Creating site canonical storage]
     std::vector< std::pair<int,int> > CanonicalSites;
+    //! [Creating site canonical storage]
+    //! [Transforming site canonical with Dihedral]
     for( int currentFactor = 0; currentFactor < 8; currentFactor++)
     {
         std::vector< std::pair<int,int> > SitesCopy = this->Sites;
@@ -415,6 +415,8 @@ void SiteGraph::MakeCanonical()
         Dihedral Transform(currentFactor);
         std::for_each(SitesCopy.begin(), SitesCopy.end(), Transform);
         std::sort(SitesCopy.begin(), SitesCopy.end());
+        //! [Transforming site canonical with Dihedral]
+        //! [Shifting site canonical]
         std::pair<int,int> shift = std::make_pair(-SitesCopy.front().first, -SitesCopy.front().second);
         for(unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++)
         {
@@ -425,6 +427,7 @@ void SiteGraph::MakeCanonical()
         {
             CanonicalSites = SitesCopy;
         }
+        //! [Shifting site canonical]
     }
     this->Sites = CanonicalSites;
 }
@@ -480,6 +483,7 @@ bool BondGraph::operator==( const BondGraph & Other)
     {
         for( int currentFactor = 0; currentFactor < 8; currentFactor++)
         {
+            //! [Bond isomorphism copy and transform]
             std::vector< std::pair< std::pair< int, int>, std::pair< int, int> > > BondsCopy = Other.Bonds;
             Dihedral Transform(currentFactor);
             std::for_each(BondsCopy.begin(), BondsCopy.end(), Transform);
@@ -493,6 +497,8 @@ bool BondGraph::operator==( const BondGraph & Other)
                 }
             }
             std::sort(BondsCopy.begin(), BondsCopy.end());
+            //! [Bond isomorphism copy and transform]
+            //! [Bond isomorphism shift check]
             std::pair<int, int> shift1 = std::make_pair(this->Bonds.front().first.first - BondsCopy.front().first.first, this->Bonds.front().first.second - BondsCopy.front().first.second);
             std::pair<int, int> shift2 = std::make_pair(this->Bonds.front().second.first - BondsCopy.front().second.first, this->Bonds.front().second.second - BondsCopy.front().second.second);
             bool Isomorphic = shift1 == shift2;
@@ -507,6 +513,7 @@ bool BondGraph::operator==( const BondGraph & Other)
             {
                 return true;
             }
+            //! [Bond isomorphism shift check]
         }
         return false;
     }
@@ -579,7 +586,10 @@ void BondGraph::PrintGraph()
 void BondGraph::MakeCanonical()
 {
     int GlobalGraphKey = 0;
+    //! [Bond canonical storage]
     std::vector<std::pair< std::pair<int,int>, std::pair<int,int> > > CanonicalBonds;
+    //! [Bond canonical storage]
+    //! [Bond canonical transform] 
     for( int currentFactor = 0; currentFactor < 8; currentFactor++)
     {
         int LocalGraphKey = 0;
@@ -596,6 +606,8 @@ void BondGraph::MakeCanonical()
             }
         }
         std::sort(BondsCopy.begin(), BondsCopy.end());
+        //! [Bond canonical transform]
+        //! [Bond canonical shift]
         std::pair<int,int> shift = std::make_pair(-BondsCopy.front().first.first, -BondsCopy.front().first.second);
         for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++)
         {
@@ -609,12 +621,14 @@ void BondGraph::MakeCanonical()
             GlobalGraphKey = LocalGraphKey;
             CanonicalBonds = BondsCopy;
         }
+        //! [Bond canonical shift]
     }
     this->Bonds = CanonicalBonds;
 }
 
 void BondGraph::GenerateAdjacencyList()
 {
+    //! [Bond adjacency copy]
     std::vector< std::pair<int, int> > SiteList;
     for(unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
@@ -626,6 +640,8 @@ void BondGraph::GenerateAdjacencyList()
     TrueEnd = unique(SiteList.begin(), SiteList.end() );
     SiteList.resize( TrueEnd - SiteList.begin() );
     this->AdjacencyList.resize(this->Bonds.size());
+    //! [Bond adjacency copy]
+    //! [Bond adjacency fill list]
     for( unsigned int CurrentBond = 0; CurrentBond < this->Bonds.size(); CurrentBond++)
     {
         std::vector< std::pair<int, int> >::iterator FirstSite;
@@ -634,14 +650,18 @@ void BondGraph::GenerateAdjacencyList()
         SecondSite = std::find(SiteList.begin(), SiteList.end(), this->Bonds.at(CurrentBond).second);
         this->AdjacencyList[CurrentBond] = std::make_pair( FirstSite - SiteList.begin(), SecondSite - SiteList.begin() ) ;
     }
+    //! [Bond adjacency fill list]
     std::sort( this->AdjacencyList.begin(), this->AdjacencyList.end());
 }
 
 void BondGraph::FindLatticeConstant()
 {
+    //! [Bond lattice constant copy]
     std::vector< std::vector< std::pair< std::pair<int, int >, std::pair<int,int> > > > BondLists;
     BondLists.push_back(this->Bonds);
     int Counter = 1;
+    //! [Bond lattice constant copy]
+    //! [Bond lattice constant transform]
     for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
     {
         std::vector< std::pair< std::pair<int, int>, std::pair<int,int> > > TempBonds = this->Bonds;
@@ -657,6 +677,8 @@ void BondGraph::FindLatticeConstant()
             }
         }
         std::sort(TempBonds.begin(), TempBonds.end());
+        //! [Bond lattice constant transform]
+        //! [Bond lattice constant shift check]
         bool GlobalShifted = false;
         for ( unsigned int CurrentList = 0; CurrentList < BondLists.size(); CurrentList++ )
         {
@@ -673,11 +695,14 @@ void BondGraph::FindLatticeConstant()
             
             GlobalShifted = GlobalShifted || Shifted;
         }
+        //! [Bond lattice constant shift check]
+        //! [Bond lattice constant store]
         if (!GlobalShifted)
         {
             BondLists.push_back(TempBonds);
             Counter++;
         }
+        //! [Bond lattice constant store]
     }
 
     this->LatticeConstant = Counter;
@@ -698,9 +723,11 @@ int BondGraph::NumberSites()
 
 void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, int FinalOrder)
 {
+    //! [Site grab back info]
     std::vector< SiteGraph > NewGraphs;
     int GlobalIdentifier = graphs.back().back().Identifier;
     int CurrentOrder = graphs.back().back().Order + 1;
+    //! [Site grab back info]
     while (CurrentOrder <= FinalOrder)
     {
         cout<<"Current Order: "<<CurrentOrder<<" Current Global ID: "<<GlobalIdentifier<<endl;   
@@ -708,13 +735,16 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
             int tid;
+            //! [Site get graph ready]
             std::pair<int,int> NewSite;
             SiteGraph OldGraph = graphs.back().at(CurrentGraph);
             SiteGraph NewGraph;
+            //! [Site get graph ready]
             omp_set_num_threads( CurrentOrder - 1 );
             #pragma omp parallel private(tid, NewSite, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier)
             {   
                 tid = omp_get_thread_num();
+                //! [Site make new graph]
                 for( int i = 0; i < 4; i++ )
                 {
                     switch ( i )
@@ -741,10 +771,12 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                         NewGraph.MakeCanonical();
                         NewGraph.GenerateAdjacencyList();
                         
+                        //! [Site make new graph]
                         bool Exists = false;
                         
                         #pragma omp critical
                         {
+                            //! [Site check new graph]
                             for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
                             {
                                 Exists = Exists || (NewGraph.Sites == NewGraphs.at(CurrentIndex).Sites );
@@ -757,6 +789,7 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
                                 NewGraph.LowField = false;
                                 NewGraphs.push_back( NewGraph );
                             }
+                            //! [Site check new graph]
                         }
                     }
                 }
@@ -772,16 +805,21 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
     graphs.resize(FinalWidth);
     int GlobalIdentifier = 0;
     
+    //! [First rectangles loops]
 
     for( unsigned int CurrentGraphWidth = 1; CurrentGraphWidth <= FinalWidth; CurrentGraphWidth++)
     {
         for( unsigned int CurrentGraphHeight = 1; CurrentGraphHeight <= FinalHeight; CurrentGraphHeight++)
         {
+            //! [First rectangles loops]
+            //! [First rectangles temp storage]
             unsigned int CurrentOrder = CurrentGraphHeight * CurrentGraphWidth;
             
             std::vector< std::pair<int, int> > SiteList;
             SiteList.resize(CurrentOrder);
             std::vector< std::pair<int, int> > Subgraphs;
+            //! [First rectangles temp storage]
+            //! [First rectangles filling vectors]
             for( unsigned int CurrentCheckWidth = 1; CurrentCheckWidth <= CurrentGraphWidth; CurrentCheckWidth++)
             {
                 for (unsigned int CurrentCheckHeight = 1; CurrentCheckHeight <= CurrentGraphHeight; CurrentCheckHeight++)
@@ -789,6 +827,8 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
                     SiteList.at(CurrentCheckHeight - 1 + (CurrentCheckWidth- 1)*CurrentGraphHeight) = std::make_pair(CurrentCheckWidth - 1, CurrentCheckHeight - 1);
 
                     int SubgraphCount = (CurrentGraphWidth + 1 - CurrentCheckWidth)*(CurrentGraphHeight + 1 - CurrentCheckHeight);
+                    //! [First rectangles filling vectors]
+                    //! [First rectangles check subgraph]
                     bool ThisGraph = (CurrentGraphHeight == CurrentCheckHeight) && (CurrentGraphWidth == CurrentCheckWidth);
                    
                     if( SubgraphCount > 0 &&
@@ -797,12 +837,15 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
                     {
                         Subgraphs.push_back(std::make_pair( SubgraphCount, graphs.at(CurrentCheckWidth - 1).at(CurrentCheckHeight - 1).Identifier ) );
                     }
+                    //! [First rectangles check subgraph]
                 }
             }
+            //! [First rectangles insert graph]
             SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
             NewGraph.GenerateAdjacencyList();
             NewGraph.LowField = false;
             graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
+            //! [First rectangles insert graph]
         }
     }
 }
@@ -812,6 +855,7 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
     graphs.resize(FinalOrder);
     int GlobalIdentifier = 0;
     
+    //! [Second rectangles loops]
 
     for( unsigned int CurrentGraphWidth = 1; CurrentGraphWidth <= FinalOrder; CurrentGraphWidth++)
     {
@@ -819,9 +863,13 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
         {
             unsigned int CurrentOrder = CurrentGraphHeight * CurrentGraphWidth;
             
+            //! [Second rectangles loops]
+            //! [Second rectangles temp storage]
             std::vector< std::pair<int, int> > SiteList;
             SiteList.resize(CurrentOrder);
             std::vector< std::pair<int, int> > Subgraphs;
+            //! [Second rectangles temp storage]
+            //! [Second rectangles filling vectors]
             for( unsigned int CurrentCheckWidth = 1; CurrentCheckWidth <= CurrentGraphWidth; CurrentCheckWidth++)
             {
                 for (unsigned int CurrentCheckHeight = 1; CurrentCheckHeight <= CurrentGraphHeight; CurrentCheckHeight++)
@@ -829,6 +877,8 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
                     SiteList.at(CurrentCheckHeight - 1 + (CurrentCheckWidth- 1)*CurrentGraphHeight) = make_pair(CurrentCheckWidth - 1, CurrentCheckHeight - 1);
 
                     int SubgraphCount = (CurrentGraphWidth + 1 - CurrentCheckWidth)*(CurrentGraphHeight + 1 - CurrentCheckHeight);
+                    //! [Second rectangles filling vectors]
+                    //! [Second rectangles check subgraph]
                     bool ThisGraph = (CurrentGraphHeight == CurrentCheckHeight) && (CurrentGraphWidth == CurrentCheckWidth);
                    
                     if( SubgraphCount > 0 &&
@@ -837,35 +887,43 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
                     {
                         Subgraphs.push_back(make_pair( SubgraphCount, graphs.at(CurrentCheckWidth - 1).at(CurrentCheckHeight - 1).Identifier ) );
                     }
+                    //! [Second rectangles check subgraph]
                 }
             }
+            //! [Second rectangles insert graph]
             SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
             NewGraph.GenerateAdjacencyList();
             NewGraph.LowField = false;
             graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
+            //! [Second rectangles insert graph]
         }
     }
 }
 
 void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, int FinalOrder)
 {
+    //! [Bond grab back info]
     std::vector< BondGraph > NewGraphs;
     int GlobalIdentifier = graphs.back().back().Identifier;
     int CurrentOrder = graphs.back().back().Order + 1;
+    //! [Bond grab back info]
     while (CurrentOrder <= FinalOrder)
     {
         cout<<CurrentOrder<<endl;
         NewGraphs.clear();
         for( unsigned int CurrentGraph = 0; CurrentGraph < graphs.back().size(); CurrentGraph++)
         {
+            //! [Bond get graph ready]
             BondGraph OldGraph = graphs.back().at(CurrentGraph);
             std::pair< std::pair< int, int>, std::pair< int, int> > NewBond;
             std::pair< int, int> NewSite;
             BondGraph NewGraph;
+            //! [Bond get graph ready]
             int tid;
             #pragma omp parallel private(tid, NewSite, NewBond, NewGraph) shared(OldGraph, NewGraphs, GlobalIdentifier) num_threads(OldGraph.Bonds.size())
             {
                 tid = omp_get_thread_num();
+                //! [Bond make new graph]
                 for( int i = 0; i < 6; i++)
                 {
                         
@@ -957,6 +1015,8 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                         NewGraph.AddBond( NewBond.first, NewBond.second);
                         NewGraph.Order = OldGraph.Order + 1;
                         NewGraph.MakeCanonical();
+                        //! [Bond make new graph]
+                        //! [Bond check new graph]
                         bool Exists = false;
                         #pragma omp critical
                         {
@@ -973,6 +1033,7 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                                 NewGraphs.push_back( NewGraph );
                             }
                         }
+                        //! [Bond check new graph]
                     }
                 }
             }
@@ -987,17 +1048,22 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
     int tid;
     int gid;
     int MaxSize = omp_get_num_procs();
+    //! [Single vector site find subgraphs search]
     for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.size(); CurrentGraphGroup++)
     {
         #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup) num_threads( MaxSize )
         {
             tid = omp_get_thread_num();
             gid = tid + CurrentGraphGroup * MaxSize;
+            //! [Single vector site find subgraphs search]
             if ( (unsigned int) gid < GraphList.size() )
             {
+                //! [Single vector site find subgraphs single] 
                 GraphList.at( gid ).SubgraphList.push_back(std::make_pair(GraphList.at( gid ).Order, 0));
+                //! [Single vector site find subgraphs single] 
     
                 unsigned int CurrentCheck = 1;
+                //! [Single vector site find subgraphs reps] 
                 while (CurrentCheck < (unsigned int) gid && GraphList.at(CurrentCheck).Order < GraphList.at( gid ).Order)
                 {
                     std::vector< std::vector< std::pair< int, int> > > DistinctReps;
@@ -1038,6 +1104,8 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
                     }
 
                     //Now we have all distinct permutations of the graph!
+                    //! [Single vector site find subgraphs reps] 
+                    //! [Single vector site find subgraphs shift count]
 
                     int Embeddings = 0;
                     for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
@@ -1079,6 +1147,7 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
                             }
                         }
                     }
+                    //! [Single vector site find subgraphs shift count]
                     CurrentCheck++;
                 }
             }
@@ -1088,6 +1157,7 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
 
 void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
 {
+    //! [Double vector site find subgraphs search]
     for( unsigned int CurrentGraphHeight = 1; CurrentGraphHeight < GraphList.size(); CurrentGraphHeight++) 
     {
         int tid;
@@ -1103,12 +1173,16 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
                 if( (unsigned int) gid < GraphList.at(CurrentGraphHeight).size() )
                 {
 
+                    //! [Double vector site find subgraphs search]
+                    //! [Double vector site find subgraphs single]
                     GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back( std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).Order, 0) );
+                    //! [Double vector site find subgraphs single]
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {
                     
                         for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
                         {
+                            //! [Double vector site find subgraphs reps]
                             std::vector< std::vector< std::pair< int, int> > > DistinctReps;
                             DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at( CurrentCheckWidth ).Sites );
 
@@ -1145,9 +1219,11 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
                                     DistinctReps.push_back(ThisRep);
                                 }
                             }
+                            //! [Double vector site find subgraphs reps]
 
                             //Now we have all distinct permutations of the graph!
 
+                            //! [Double vector site find subgraphs shift count]
                             int Embeddings = 0;
                             for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
                             {
@@ -1187,6 +1263,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
                             {
                                 GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back( std::make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
                             }
+                            //! [Double vector site find subgraphs shift count]
                         }
                     }   
                 }
@@ -1197,6 +1274,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
 
 void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned int Index)
 {
+    //! [Double vector site index find subgraphs search]
     unsigned int CurrentGraphHeight = Index - 1;
     if ( CurrentGraphHeight < GraphList.size() ) 
     {
@@ -1210,15 +1288,19 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);
+                //! [Double vector site index find subgraphs search]
                 if( (unsigned int) gid < GraphList.at(CurrentGraphHeight).size() )
                 {
 
+                    //! [Double vector site index find subgraphs single]
                     GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back( std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).Order, 0) );
+                    //! [Double vector site index find subgraphs single]
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {
                     
                         for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
                         {
+                            //! [Double vector site index find subgraphs reps]
                             std::vector< std::vector< std::pair< int, int> > > DistinctReps;
                             DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at( CurrentCheckWidth ).Sites );
 
@@ -1255,8 +1337,10 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned
                                     DistinctReps.push_back(ThisRep);
                                 }
                             }
+                            //! [Double vector site index find subgraphs reps]
 
                             //Now we have all distinct permutations of the graph!
+                            //! [Double vector site index find subgraphs shift count]
 
                             int Embeddings = 0;
                             for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
@@ -1297,6 +1381,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned
                             {
                                 GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back( std::make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
                             }
+                            //! [Double vector site index find subgraphs shift count]
                         }
                     }   
                 }
@@ -1312,6 +1397,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
         int tid;
         int gid;
         int MaxSize = omp_get_num_procs();
+        //! [Double vector bond find subgraphs search]
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
             omp_set_num_threads( MaxSize );
@@ -1319,14 +1405,18 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);
+                //! [Double vector bond find subgraphs search]
                 if( (unsigned int) gid < GraphList.at(CurrentGraphHeight).size() )
                 {
+                    //! [Double vector bond find subgraphs single]
                     GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).NumberSites(), 0));
+                    //! [Double vector bond find subgraphs single]
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {
                     
                         for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
                         {
+                            //! [Double vector bond find subgraphs reps]
                             vector< vector< std::pair< std::pair<int,int>, std::pair<int,int> > > > DistinctReps;
                             DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds );
 
@@ -1377,7 +1467,8 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
                             }
 
                             //Now we have all distinct permutations of the graph!
-
+                            //! [Double vector bond find subgraphs reps]
+                            //! [Double vector bond find subgraphs shift count]
                             int Embeddings = 0;
                             for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
                             {
@@ -1419,6 +1510,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
                             {
                                 GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
                             }
+                            //! [Double vector bond find subgraphs shift count]
                         }
                     }
                 }
@@ -1435,6 +1527,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
         int tid;
         int gid;
         int MaxSize = omp_get_num_procs();
+        //! [Double vector bond index find subgraphs search]
         for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.at(CurrentGraphHeight).size(); CurrentGraphGroup++)
         {
             omp_set_num_threads( MaxSize );
@@ -1442,14 +1535,20 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
             {
                 tid = omp_get_thread_num();
                 gid = tid + (CurrentGraphGroup * MaxSize);
+                //! [Double vector bond index find subgraphs search]
                 if( (unsigned int) gid < GraphList.at(CurrentGraphHeight).size() )
                 {
+                
+                    //! [Double vector bond index find subgraphs single]
                     GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(GraphList.at(CurrentGraphHeight).at( gid ).NumberSites(), 0));
+                    //! [Double vector bond index find subgraphs single]
+                
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {
                     
                         for(unsigned int CurrentCheckWidth = 0; CurrentCheckWidth < GraphList.at(CurrentCheckHeight).size(); CurrentCheckWidth++ )
                         {
+                            //! [Double vector bond index find subgraphs reps]
                             vector< vector< std::pair< std::pair<int,int>, std::pair<int,int> > > > DistinctReps;
                             DistinctReps.push_back( GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Bonds );
 
@@ -1499,8 +1598,10 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
                                 }
                             }
 
+                            //! [Double vector bond index find subgraphs reps]
                             //Now we have all distinct permutations of the graph!
 
+                            //! [Double vector bond index find subgraphs shift count]
                             int Embeddings = 0;
                             for( unsigned int CurrentRep = 0; CurrentRep < DistinctReps.size(); CurrentRep++)
                             {
@@ -1542,6 +1643,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
                             {
                                 GraphList.at(CurrentGraphHeight).at( gid ).SubgraphList.push_back(std::make_pair(Embeddings, GraphList.at(CurrentCheckHeight).at(CurrentCheckWidth).Identifier));
                             }
+                            //! [Double vector bond index find subgraphs shift count]
                         }
                     }
                 }
@@ -1554,11 +1656,14 @@ void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
     ofstream Output(File.c_str());
     for( unsigned int CurrentGraph = 0; CurrentGraph < GraphList.size(); CurrentGraph++)
     {
+        //! [Single vector site first]
         Output<<GraphList.at(CurrentGraph).Identifier<<" ";
         Output<<GraphList.at(CurrentGraph).Order<<" ";
         Output<<GraphList.at(CurrentGraph).LatticeConstant<<" ";
         Output<<GraphList.at(CurrentGraph).LowField<<endl;
 
+        //! [Single vector site first]
+        //! [Single vector site second]
         for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentGraph).Sites.size(); CurrentSite++)
         {
             Output<<GraphList.at(CurrentGraph).Sites.at(CurrentSite).first;
@@ -1567,6 +1672,8 @@ void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
             Output<<" ";
         }
         Output<<endl;
+        //! [Single vector site second]
+        //! [Single vector site third]
         for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentGraph).AdjacencyList.size(); CurrentConnection++)
         {
             Output<<GraphList.at(CurrentGraph).AdjacencyList.at(CurrentConnection).first;
@@ -1575,6 +1682,8 @@ void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
             Output<<" ";
         }
         Output<<endl;
+        //! [Single vector site third]
+        //! [Single vector site fourth]
         for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentGraph).SubgraphList.size(); CurrentSubgraph++)
         {
             Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).second;
@@ -1583,6 +1692,7 @@ void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
             Output<<" ";
         }
         Output<<endl;
+        //! [Single vector site fourth]
     }
 }
 
@@ -1593,12 +1703,15 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
     {
         for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
         {
+            //! [Double vector site first]
 
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LowField<<endl;
 
+            //! [Double vector site first]
+            //! [Double vector site second]
             for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentWidth).at(CurrentHeight).Sites.size(); CurrentSite++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Sites.at(CurrentSite).first;
@@ -1607,6 +1720,8 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector site second]
+            //! [Double vector site third]
             for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.size(); CurrentConnection++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.at(CurrentConnection).first;
@@ -1615,6 +1730,8 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector site third]
+            //! [Double vector site fourth]
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
@@ -1623,24 +1740,30 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector site fourth]
         }
     }
 }
 
 void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string File, unsigned int Index)
 {
+    //! [Site append]
     ofstream Output;
     Output.open(File.c_str(), std::ios::app);
+    //! [Site append]
     const unsigned int CurrentWidth = Index - 1;
     if( CurrentWidth < GraphList.size() )
     {
         for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
         {
+            //! [Double vector index site first]
 
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LowField<<endl;
+            //! [Double vector index site first]
+            //! [Double vector index site second]
             for (unsigned int CurrentSite = 0; CurrentSite < GraphList.at(CurrentWidth).at(CurrentHeight).Sites.size(); CurrentSite++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Sites.at(CurrentSite).first;
@@ -1649,6 +1772,8 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector index site second]
+            //! [Double vector index site third]
             for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.size(); CurrentConnection++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.at(CurrentConnection).first;
@@ -1657,6 +1782,8 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector index site third]
+            //! [Double vector index site fourth]
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
@@ -1665,6 +1792,7 @@ void WriteGraphsToFile(std::vector< std::vector<SiteGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector index site fourth]
         }
     }
     Output.close();
@@ -1675,10 +1803,13 @@ void WriteGraphsToFile(std::vector<BondGraph> & GraphList, string File)
     ofstream Output(File.c_str());
     for( unsigned int CurrentGraph = 0; CurrentGraph < GraphList.size(); CurrentGraph++)
     {
+        //! [Single vector bond first]
         Output<<GraphList.at(CurrentGraph).Identifier<<" ";
         Output<<GraphList.at(CurrentGraph).Order<<" ";
         Output<<GraphList.at(CurrentGraph).LatticeConstant<<" ";
         Output<<GraphList.at(CurrentGraph).LowField<<endl;
+        //! [Single vector bond first]
+        //! [Single vector bond second]
 
         for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentGraph).Bonds.size(); CurrentBond++)
         {
@@ -1692,6 +1823,8 @@ void WriteGraphsToFile(std::vector<BondGraph> & GraphList, string File)
             Output<<" ";
         }
         Output<<endl;
+        //! [Single vector bond second]
+        //! [Single vector bond third]
         for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentGraph).AdjacencyList.size(); CurrentConnection++)
         {
             Output<<GraphList.at(CurrentGraph).AdjacencyList.at(CurrentConnection).first;
@@ -1700,6 +1833,8 @@ void WriteGraphsToFile(std::vector<BondGraph> & GraphList, string File)
             Output<<" ";
         }
         Output<<endl;
+        //! [Single vector bond third]
+        //! [Single vector bond fourth]
         for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentGraph).SubgraphList.size(); CurrentSubgraph++)
         {
             Output<<GraphList.at(CurrentGraph).SubgraphList.at(CurrentSubgraph).first;
@@ -1708,6 +1843,7 @@ void WriteGraphsToFile(std::vector<BondGraph> & GraphList, string File)
             Output<<" ";
         }
         Output<<endl;
+        //! [Single vector bond fourth]
     }
     Output.close();
 }
@@ -1720,11 +1856,14 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
         for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
         {
 
+            //! [Double vector bond first]
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LowField<<endl;
 
+            //! [Double vector bond first]
+            //! [Double vector bond second]
             for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.size(); CurrentBond++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).first.first;
@@ -1737,6 +1876,8 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector bond second]
+            //! [Double vector bond third]
             for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.size(); CurrentConnection++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.at(CurrentConnection).first;
@@ -1745,6 +1886,8 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector bond third]
+            //! [Double vector bond fourth]
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).second;
@@ -1753,6 +1896,7 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
                 Output<<" ";
             } 
             Output<<endl;
+            //! [Double vector bond fourth]
         }
     }
     Output.close();
@@ -1760,19 +1904,24 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
 
 void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string File, unsigned int Index)
 {
+    //! [Bond append]
     ofstream Output;
     Output.open(File.c_str(), std::ios::app );
+    //! [Bond append]
     const unsigned int CurrentWidth = Index - 1;
     if( CurrentWidth < GraphList.size() )
     {
         for( unsigned int CurrentHeight = 0; CurrentHeight < GraphList.at(CurrentWidth).size(); CurrentHeight++)
         {
 
+            //! [Double vector index bond first]
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Identifier<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Order<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LatticeConstant<<" ";
             Output<<GraphList.at(CurrentWidth).at(CurrentHeight).LowField<<endl;
 
+            //! [Double vector index bond first]
+            //! [Double vector index bond second]
             for (unsigned int CurrentBond = 0; CurrentBond < GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.size(); CurrentBond++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).Bonds.at(CurrentBond).first.first;
@@ -1785,6 +1934,8 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector index bond second]
+            //! [Double vector index bond third]
             for (unsigned int CurrentConnection = 0; CurrentConnection < GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.size(); CurrentConnection++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).AdjacencyList.at(CurrentConnection).first;
@@ -1793,6 +1944,8 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
                 Output<<" ";
             }
             Output<<endl;
+            //! [Double vector index bond third]
+            //! [Double vector index bond fourth]
             for (unsigned int CurrentSubgraph = 0; CurrentSubgraph < GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.size(); CurrentSubgraph++)
             {
                 Output<<GraphList.at(CurrentWidth).at(CurrentHeight).SubgraphList.at(CurrentSubgraph).first;
@@ -1801,6 +1954,7 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
                 Output<<" ";
             } 
             Output<<endl;
+            //! [Double vector index bond fourth]
         }
     }
     Output.close();
@@ -1808,11 +1962,12 @@ void WriteGraphsToFile(std::vector< std::vector<BondGraph> > & GraphList, string
 
 void ReadGraphsFromFile( vector< Graph > & GraphList, const string & File)
 {
-  ifstream input(File.c_str());
-  vector< string > rawLines;
-  Graph tempGraph;
-  
-  while ( !input.eof() )
+    //! [Read in file]    
+    ifstream input(File.c_str());
+    vector< string > rawLines;
+    Graph tempGraph;
+    
+    while ( !input.eof() )
     {
         rawLines.resize(rawLines.size() + 1);
         getline(input, rawLines.back()) ; 
@@ -1820,57 +1975,49 @@ void ReadGraphsFromFile( vector< Graph > & GraphList, const string & File)
 
     input.close();
 
-    //cout<<rawLines.size()<<endl;
-
     stringstream ss (stringstream::in | stringstream::out);
+
+    //! [Read in file]
 
     for  (unsigned int currentLine = 0; currentLine < rawLines.size()-1; currentLine+=4)
     {
 
+        //! [Fill containers]
         string currentNumber;
     
         ss << rawLines.at(currentLine);
-          
+        
         ss >> tempGraph.Identifier;
         ss >> tempGraph.Order;
-	//    ss >> tempGraph.NumberBonds;
         ss >> tempGraph.LatticeConstant;
-	ss >> tempGraph.LowField;
-           
-        //cout << "Identifier = " <<tempGraph.Identifier << endl;
-        //cout << "NumberSites = " << tempGraph.NumberSites << endl;
-        //cout << "LatticeConstant = " <<tempGraph.LatticeConstant << endl;
-        //cout << "LowField = " << tempGraph.LowField << endl;
-
+        ss >> tempGraph.LowField;
+        
         ss.str("");
         ss.clear();
 
         //read in bonds
         ss << rawLines.at(currentLine+2);   
         int subSize(0);
-	string teststring;
+        string teststring;
         while(!ss.eof()){
-	  ss >> teststring;
-	  subSize++;
+            ss >> teststring;
+            subSize++;
         }
-	int NumberBonds = subSize/2;
+        int NumberBonds = subSize/2;
         ss.str("");
         ss.clear();
-	teststring="";
-        
+        teststring="";
+            
         ss << rawLines.at(currentLine+2);
 
         tempGraph.AdjacencyList.resize(NumberBonds);
         for(int b=0; b<NumberBonds;b++){
-          ss >> tempGraph.AdjacencyList[b].first;
-          ss >> tempGraph.AdjacencyList[b].second;
-          //cout << tempGraph.AdjacencyList[b].first << "," <<tempGraph.AdjacencyList[b].second << endl;
+            ss >> tempGraph.AdjacencyList[b].first;
+            ss >> tempGraph.AdjacencyList[b].second;
         }
         ss.str("");
         ss.clear();
-
-
-
+        
         //read in subclusters
         ss << rawLines.at(currentLine+3);   
 
@@ -1888,13 +2035,13 @@ void ReadGraphsFromFile( vector< Graph > & GraphList, const string & File)
         for(int b=0; b<subSize;b++){
             ss >> tempGraph.SubgraphList[b].first;
             ss >> tempGraph.SubgraphList[b].second;
-            //  cout << tempGraph.SubgraphList[b].first << "," <<tempGraph.SubgraphList[b].second << endl;
         }
 
         ss.str("");
         ss.clear();
-
+        //! [Fill containers]
+        //! [Finish graph]
         GraphList.push_back(tempGraph);
-
+        //! [Finish graph]
     }   
 }

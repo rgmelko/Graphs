@@ -115,6 +115,20 @@
 <span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="s">"4bondbased.dat"</span><span class="p">);</span> <span class="c1">// Write all the graphs we generated to disk</span>
 </pre></div>
 
+<p>Perhaps you would like to generate all rectangular site based graphs up to a 4 by 4 plaquette?</p>
+
+<div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">SiteGraph</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">rectangles</span><span class="p">;</span> <span class="c1">// This time the vector is empty</span>
+<span class="n">ConstructRectangularSiteGraphs</span><span class="p">(</span><span class="n">rectangles</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+<span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">rectangles</span><span class="p">,</span> <span class="s">"4-4rectangles.dat"</span><span class="p">);</span>
+</pre></div>
+
+<p>Or maybe you want all rectangular site based graphs with 16 sites or fewer?</p>
+
+<div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">SiteGraph</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">rectangles</span><span class="p">;</span> <span class="c1">// This time the vector is empty</span>
+<span class="n">ConstructRectangularSiteGraphs</span><span class="p">(</span><span class="n">rectangles</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
+<span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">rectangles</span><span class="p">,</span> <span class="s">"16rectangles.dat"</span><span class="p">);</span>
+</pre></div>
+
 <p>If you would like to generate a large number of graphs and are not sure how long this will take, you can try using versions of <code>FindSubgraphs</code> and <code>WriteGraphsToFile</code> that write only one order at a time - this way you can incrementally add to your resulting file and "save" your progress in the case that your job gets killed. To do that, initialise all the vectors as above, but we'll call the generation/subgraph/writing code a little differently this time:</p>
 
 <div class="highlight"><pre><span class="k">for</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
@@ -134,6 +148,8 @@
         <span class="n">WriteGraphsToFile</span><span class="p">(</span><span class="n">testbonds</span><span class="p">,</span> <span class="s">"10bondbased.dat"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
+
+<p>To compile Graphs, you can use the provided Makefile (which has a bunch of g++ warnings and OpenMP enabled for you) or you can simply run your own compiler on it. Graphs has been tested with -O2 and below only. You don't need to pass any command line arguments to run the executable, but make sure that you can actually write to the location you want to put the graphs in if you're using <code>WriteGraphsToFile</code>.</p>
       </section>
 
     </div>

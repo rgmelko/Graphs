@@ -50,7 +50,9 @@
 
 <h1>Running graphs</h1>
 
-<p>Graphs is intended to generate a variety of types of graphs needed for numerical condensed matter simulations. You can create site- and bond-based graphs. You can find detailed descriptions of these on the Graphs <a href="http://github.com/rgmelko/Graphs/wiki">wiki</a>. Since NLC is run on sets of self-consistent graphs, you can generate all site- or bond-based graphs, or only sets like "all rectangles". You will need to create a vector to store the graphs, and then call the appropriate function. graphs also contains utility functions to read/write the graphs to/from file. Here's an example where we generate site-based graphs:</p>
+<p>Graphs is intended to generate a variety of types of graphs needed for numerical condensed matter simulations. You can create site- and bond-based graphs. You can find detailed descriptions of these on the Graphs <a href="http://github.com/rgmelko/Graphs/wiki">wiki</a>. Since NLC is run on sets of self-consistent graphs, you can generate all site- or bond-based graphs, or only sets like "all rectangles". To read our more complete documentation of all this, head on over to the <a href="csclub.uwaterloo.ca/%7Ekshyatt/Graphs/index.html">Doxygen documentation</a>.</p>
+
+<p>You will need to create a vector to store the graphs, and then call the appropriate function. graphs also contains utility functions to read/write the graphs to/from file. Here's an example where we generate site-based graphs:</p>
 
 <div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span> <span class="n">SiteGraph</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">testsites</span><span class="p">;</span>
 <span class="n">testsites</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// Create a graph with one site to start from</span>

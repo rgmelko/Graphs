@@ -335,10 +335,32 @@ class Dihedral
         Dihedral(int);
         /*! Applies the transformation to a site
         \param Coordinates The coordinates of the site to be transformed
+        
+        Element controls which element of the group is applied. Its values correspond to:
+            -# Identity (do nothing)
+            -# Rotate 90 degrees counterclockwise
+            -# Rotate 180 degrees
+            -# Rotate 90 degrees clockwise
+            -# Reflect over the x axis
+            -# Reflect over the y axis
+            -# Reflect over the diagonal from the 2nd quadrant to the 4th quadrant
+            -# Reflect over the diagonal from the 1st quadrant to the 3rd quadrant
+        
         */
         void operator() (std::pair<int,int> & );
         /*! Applies the transformation to a bond
         \param Coordinates The coordinates of the end-points of the bond to be transformed
+        
+        Element controls which element of the group is applied. Its values correspond to:
+            -# Identity (do nothing)
+            -# Rotate 90 degrees counterclockwise
+            -# Rotate 180 degrees
+            -# Rotate 90 degrees clockwise
+            -# Reflect over the x axis
+            -# Reflect over the y axis
+            -# Reflect over the diagonal from the 2nd quadrant to the 4th quadrant
+            -# Reflect over the diagonal from the 1st quadrant to the 3rd quadrant
+        
         */
         void operator() (std::pair< std::pair<int,int>, std::pair<int,int> > & );
 }; //Transform;

@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Graphs by rgmelko</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/rgmelko/Graphs">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/rgmelko/Graphs/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/rgmelko/Graphs/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Introduction to Graphs</h1>
+          <p></p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/rgmelko">rgmelko</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
+
+<h1>Why use graphs?</h1>
+
+<p>The numerical linked cluster expansion involves approximating the value of some extensive quantity on an infinite lattice by using a weighted sum of graphs. But what does this mean? How is a graph defined, and which graphs should be used in this weighted sum? </p>
+
+
+<h2>Graph definition</h2>
+
+<p> A graph is defined as a collection of points (usually called vertices in the graph theory literature) and lines connecting them (edges). Since we are interested in a quantum model on a lattice, we restrict ourselves to considering only those graphs which are embeddable in the infinite lattice. For instance, if we were considering the square lattice, we would not use any graphs with triangles included (in the graph theory terminology, 3-cycles). If we considered the Kagome lattice, any graph containing a square wouldn't be useful to us. Some Hamiltonians are direction "agnostic", and some are not - for some Hamiltonians, it matters if (for a line), the line points in the <i>x</i> direction or the <i>y</i> direction. So the set of graphs we use will depend both on the lattice and the model we are interested in studying. </p>
+
+<h1> What's a lattice? </h1> 
+
+<p> A lattice is a collection of points in some number of dimensions (for our purposes, 1, 2, or 3) which exist in some regular, repeating arrangement and "fill" the infinite plane. A common example is a Cartesian grid - think of graph paper. The points where the grid lines on the paper cross are the lattice sites, and the lines connect them. The distance between neighbouring points is always the same, and if you started with one point (say the corner of the paper) and information about how far apart neighbours need to be, you could draw the graph paper yourself. This grid is an example of a square lattice. Square lattices are common in human societies (we like to put our city streets on a repeating square pattern) and also appear in nature, in the form of crystals. We say that a lattice can be defined in terms of its <b>unit cell</b> and <b>basis vectors</b>. A lattice has as many basis vectors as the dimension of the space it lives in - a two dimensional lattice has two basis vectors, a three dimensional lattice has three, etc. In our grid paper example, the unit cell would be the point where the lines cross - this is the smallest repeating piece. The basis vectors would be two lines, each pointing to a neighbour, at right angles to each other. Some lattices like the square lattice have a unit cell with only one point (or site) in it - these lattices are called Bravais. Other lattices (like the honeycomb) have a unit cell with more than one point in (try to draw a honeycomb with two basis vectors and one starting site). The distinction between Bravais and non-Bravais lattices is important in physics. </p>
+
+<h1> Quantum? </h1> 
+
+<p> You've probably heard of quantum mechanics. As they say, <i>it's kind of a big deal</i>. Quantum mechanics is great because it matches our observations about the world really well, and its predictions are both powerful and very accurate. If you've used a computer, a barcode scanner, anything else with a laser, a cellphone, or many other pieces of modern technology recently, you've used something that probably works because it was designed and understood using quantum mechanical ideas. However, there's a lot about quantum mechanics that's not well understood. Condensed matter physics focuses on questions about how large numbers of quantum mechanical objects interact with each other to give solids, liquids, glasses, ices, and other states the properties they have. Problems in this field can be hard to tackle "by hand" using normal mathematical techniques. Luckily for physicists, there are powerful computers available do some of the predicting stuff work for us. </p>
+
+<h1> So you need to code ... </h1>
+
+<p> Condensed matter physicists like to represent a system they're interested in (like a big block of ice, or a huge magnet) as an essentially infinite lattice. This makes sense, because most systems we do experiments on have a <a href="http://en.wikipedia.org/wiki/Avogadro%27s_number">large number</a> of interacting objects, and we are only really interested in how the system behaves "in the bulk" (not near the edges). Computers can't represent an infinite number of objects, and simulating every single object isn't practical either (you'd need far more bytes of storage than there are atoms in the universe just to represent the system). So we have found ways to simulate much smaller versions of these big systems, and use a bunch of cool programming tricks to approximate the bigger systems we wish we could study directly. There are a few working techniques in this field, like <a href="http://en.wikipedia.org/wiki/Quantum_Monte_Carlo">Quantum Monte Carlo</a>, <a href="http://en.wikipedia.org/wiki/High_temperature_expansion">High Temperature Expansion</a>, and the focus of this project, <a href="http://rgmelko.github.com/1D_NLC/index.html">Numerical Linked Cluster Expansion</a>.
+
+<h1> Now what? </h1>
+
+If you'd like to learn more about the specifics of the lattices and how that's used in NLC, continue on to <a href="http://rgmelko.github.com/Graphs/intro.html">Introduction to graphs</a>. Or you can simply check out the code for yourself, which you can do by clicking the "View on GitHub" link at the top of the page. 
+
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>

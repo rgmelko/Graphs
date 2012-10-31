@@ -5,6 +5,8 @@ Code and files for graph generation. Developed by [Katie Hyatt](http://github.co
 
 This code aims to generate all isomorphically and/or topologically distinct graphs on a variety of 2D lattices used in condensed matter simulations. We define two graphs as isomorphically distinct iff there is no transformation in the lattice's [dihedral group](http://en.wikipedia.org/wiki/Dihedral_group) that can take one graph to the other. We say they are topologically distinct if the Hamiltonians for the two graphs will be different.
 
+The main documentation for the Graphs repo can be found [here](http://kshyatt.github.com/Graphs/)
+
 Installation
 ============
 

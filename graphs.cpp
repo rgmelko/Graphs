@@ -26,10 +26,10 @@ int main()
     SiteList[0].first = 0;
     SiteList[0].second = 0;
     std::vector< std::pair<int,int> > Empty;
-    SiteGraph Start(SiteList, 0, 1, 1, Square, Empty); 
+    SiteGraph Start(SiteList, 0, 1, 1, Triangular, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    for(unsigned int i = 1; i <= 8; i++)
+    for(unsigned int i = 1; i <= 2; i++)
     {
         ConstructSiteBasedGraphs(testsites, i);
         FindSubgraphs(testsites, i);
@@ -72,9 +72,10 @@ int main()
 
 Graph::Graph()
 {
-    Order = 0;
+    Order           = 0;
     LatticeConstant = 1;
-    Identifier = 0;
+    LatticeType     = Square;
+    Identifier      = 0;
     SubgraphList.clear();
 }
 
@@ -119,7 +120,8 @@ int Graph::Valency( int Site )
     int Count = 0;
     for( unsigned int CurrentConnection = 0; CurrentConnection < this->AdjacencyList.size(); CurrentConnection++ )
     {
-        if ( this->AdjacencyList[ CurrentConnection ].first == Site || this-> AdjacencyList[ CurrentConnection ].second == Site )
+        if ( this->AdjacencyList[ CurrentConnection ].first  == Site || 
+             this->AdjacencyList[ CurrentConnection ].second == Site )
         {
             ++Count;
         }
@@ -137,7 +139,13 @@ SiteGraph::SiteGraph()
     SubgraphList.clear();
 }
 
-SiteGraph::SiteGraph( std::vector< std::pair< int, int > > & SiteList, int IdentNumber, int SiteCount, int LatticeConst, Geometry Type, std::vector< std::pair<int, int> > & Subgraphs )
+SiteGraph::SiteGraph( 
+    std::vector< std::pair< int, int > > & SiteList, 
+    int IdentNumber, 
+    int SiteCount, 
+    int LatticeConst, 
+    Geometry Type, 
+    std::vector< std::pair<int, int> > & Subgraphs )
 {
     Identifier      = IdentNumber;
     Order           = SiteCount;
@@ -323,8 +331,8 @@ void Dihedral::operator()( std::pair< int, int> & Coordinates )
             break;
 
         case 1 : //Triangular
-        case 2 :
-        case 3 :
+        case 2 : //Kagome
+        case 3 : //Honeycomb
             switch( this->element )
             {
                 case 0 : // Identity
@@ -332,7 +340,7 @@ void Dihedral::operator()( std::pair< int, int> & Coordinates )
                 case 1 : // Rotate counter clockwise by pi/3
                     TempFirst          = Coordinates.first;
                     TempSecond         = Coordinates.second;
-                    Coordinates.first  = TempFirst - TempSecond;
+                    Coordinates.first  = - TempSecond;
                     Coordinates.second = TempSecond + TempFirst;
                     break;
                 case 2 : // Rotate counter clockwise by 2pi/3
@@ -346,12 +354,10 @@ void Dihedral::operator()( std::pair< int, int> & Coordinates )
                     Coordinates.second = -Coordinates.second;
                     break;
                 case 4 : // Rotate counterclockwise by 4pi/3
-                    Coordinates.first  = -Coordinates.first;
-                    Coordinates.second = -Coordinates.second;
                     TempFirst          = Coordinates.first;
                     TempSecond         = Coordinates.second;
-                    Coordinates.first  = TempFirst - TempSecond;
-                    Coordinates.second = TempSecond + TempFirst;
+                    Coordinates.first  = TempSecond;
+                    Coordinates.second = -TempSecond - TempFirst;
                     break;
                 case 5 : // Rotate counterclockwise by 5pi/3
                     Coordinates.first  = -Coordinates.first;
@@ -392,7 +398,7 @@ void Dihedral::operator()( std::pair< int, int> & Coordinates )
     }
 }
 
-void Dihedral::operator()( std::pair< std::pair< int, int >, std::pair< int, int > > & Coordinates )
+void Dihedral::operator()( std::pair< std::pair< int, int > , std::pair< int, int > > & Coordinates )
 {
     int TempFirst;
     int TempSecond;
@@ -457,8 +463,8 @@ void Dihedral::operator()( std::pair< std::pair< int, int >, std::pair< int, int
             }
             break;
         case 1 : //Triangular;
-        case 2 :
-        case 3 :
+        case 2 : //Kagome
+        case 3 : //Honeycomb
             switch( this->element )
             {
                 case 0 : // Identity
@@ -624,12 +630,12 @@ int SiteGraph::SiteDegree( int xIndex, int yIndex )
     int DegreeCounter = 0;
     for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++ )
     {
-        if( ( ( this->Sites[ CurrentSite ].first == xIndex - 1 || 
-                this->Sites[ CurrentSite ].first == xIndex + 1 ) && 
+        if( ( ( this->Sites[ CurrentSite ].first  == xIndex - 1 || 
+                this->Sites[ CurrentSite ].first  == xIndex + 1 ) && 
                 this->Sites[ CurrentSite ].second == yIndex ) ||
             ( ( this->Sites[ CurrentSite ].second == yIndex - 1 || 
                 this->Sites[ CurrentSite ].second == yIndex + 1 ) &&
-                this->Sites[ CurrentSite ].first == xIndex ) )
+                this->Sites[ CurrentSite ].first  == xIndex ) )
          {
             DegreeCounter++;
          }
@@ -655,7 +661,13 @@ void SiteGraph::MakeCanonical()
         case 3:
             MaxElement = 12;
             break;
-    }    
+    }
+    cout<<"Starting sites: "<<endl;    
+    for(unsigned int i = 0; i < this->Sites.size(); i++)
+    {
+        cout<<"("<<this->Sites[i].first<<" "<<this->Sites[i].second<<")";
+    }
+    cout<<endl;
     for( int currentFactor = 0; currentFactor < MaxElement; currentFactor++ )
     {
         std::vector< std::pair< int, int > > SitesCopy = this->Sites;
@@ -663,6 +675,12 @@ void SiteGraph::MakeCanonical()
         Dihedral Transform( currentFactor, this->LatticeType );
         std::for_each( SitesCopy.begin(), SitesCopy.end(), Transform );
         std::sort( SitesCopy.begin(), SitesCopy.end() );
+        cout<<"Current Factor: "<<currentFactor<<endl;
+        for(unsigned int i = 0; i < SitesCopy.size(); i++)
+        {
+            cout<<"("<<SitesCopy[i].first<<" "<<SitesCopy[i].second<<")";
+        }
+        cout<<endl;
         std::pair< int, int > shift = std::make_pair( -SitesCopy.front().first, -SitesCopy.front().second );
         for( unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++ )
         {
@@ -704,7 +722,13 @@ BondGraph::BondGraph()
     SubgraphList.clear();
 }
 
-BondGraph::BondGraph(std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > & BondList, int IdentNumber, int BondNumber, int LatticeConst, Geometry Type, std::vector< std::pair< int, int > > & Subgraphs )
+BondGraph::BondGraph(
+    std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > & BondList, 
+    int IdentNumber, 
+    int BondNumber, 
+    int LatticeConst, 
+    Geometry Type, 
+    std::vector< std::pair< int, int > > & Subgraphs )
 {
     Identifier      = IdentNumber;
     Order           = BondNumber;
@@ -853,6 +877,7 @@ void BondGraph::PrintGraph()
     }
     cout<<endl;
 }
+
 void BondGraph::MakeCanonical()
 {
     int GlobalGraphKey = 0;
@@ -1643,6 +1668,7 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned
                 if( (unsigned int) gid < GraphList[ CurrentGraphHeight ].size() )
                 {
 
+                    GraphList[ CurrentGraphHeight ][ gid ].SubgraphList.clear();
                     GraphList[ CurrentGraphHeight ][ gid ].SubgraphList.push_back( std::make_pair(GraphList[ CurrentGraphHeight ][ gid ].Order, 0) );
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {

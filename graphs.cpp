@@ -19,14 +19,14 @@ int main()
 {
     //vector< vector< SiteGraph > > rectangles;
     //ConstructRectangularSiteGraphs(rectangles, 2, 3);
-    /*vector< vector< SiteGraph > > testsites;
+    vector< vector< SiteGraph > > testsites;
     testsites.resize(1);
     std::vector< std::pair<int,int> > SiteList;
     SiteList.resize(1);
     SiteList[0].first = 0;
     SiteList[0].second = 0;
     std::vector< std::pair<int,int> > Empty;
-    SiteGraph Start(SiteList, 0, 1, 1, Empty); 
+    SiteGraph Start(SiteList, 0, 1, 1, Square, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
     for(unsigned int i = 1; i <= 8; i++)
@@ -35,7 +35,7 @@ int main()
         FindSubgraphs(testsites, i);
         WriteGraphsToFile(testsites, "8sitebased.dat", i);
     }
-    */
+    /*
     vector< vector< BondGraph > > testbonds;
     testbonds.resize(2);
     vector<std::pair< std::pair<int,int>, std::pair<int,int> > > BondList1;
@@ -52,8 +52,8 @@ int main()
     BondList2[0].second.second = 0;
     vector< std::pair<int,int> > Empty1;
     vector< std::pair<int,int> > Empty2;
-    BondGraph Start1(BondList1, 0, 0, 1, Empty1); 
-    BondGraph Start2(BondList2, 1, 1, 2, Empty2);
+    BondGraph Start1(BondList1, 0, 0, 1, Square, Empty1); 
+    BondGraph Start2(BondList2, 1, 1, 2, Square, Empty2);
     testbonds[0].resize(1);
     testbonds[0][0] = Start1;
     testbonds[0][0].LowField = true;
@@ -65,6 +65,7 @@ int main()
     ConstructBondBasedGraphs(testbonds, 4);
     FindSubgraphs(testbonds);
     WriteGraphsToFile(testbonds, "test4bondbased.dat");
+    */
     return 0;
 
 }
@@ -77,36 +78,40 @@ Graph::Graph()
     SubgraphList.clear();
 }
 
-Graph::Graph(int IdentNumber, int ElementCount, int LatticeConst, std::vector< std::pair<int, int> > & Subgraphs )
+Graph::Graph(int IdentNumber, int ElementCount, int LatticeConst, Geometry Type, std::vector< std::pair<int, int> > & Subgraphs )
 {
-    Identifier = IdentNumber;
-    Order = ElementCount;
+    Identifier      = IdentNumber;
+    Order           = ElementCount;
     LatticeConstant = LatticeConst;
-    SubgraphList = Subgraphs;
+    LatticeType     = Type;
+    SubgraphList    = Subgraphs;
 }
 
-Graph::Graph(int IdentNumber, int ElementCount, int LatticeConst, std::vector< std::pair<int, int> > & Adjacency, std::vector< std::pair<int, int> > & Subgraphs )
+Graph::Graph(int IdentNumber, int ElementCount, int LatticeConst, Geometry Type, std::vector< std::pair<int, int> > & Adjacency, std::vector< std::pair<int, int> > & Subgraphs )
 {
-    Identifier = IdentNumber;
-    Order = ElementCount;
+    Identifier      = IdentNumber;
+    Order           = ElementCount;
     LatticeConstant = LatticeConst;
-    AdjacencyList = Adjacency;
-    SubgraphList = Subgraphs;
+    LatticeType     = Type;
+    AdjacencyList   = Adjacency;
+    SubgraphList    = Subgraphs;
 }
 
 Graph& Graph::operator=( const Graph & Other)
 {
-    this->Order = Other.Order;
+    this->Order           = Other.Order;
     this->LatticeConstant = Other.LatticeConstant;
-    this->SubgraphList = Other.SubgraphList;
-    this->LowField = Other.LowField;
+    this->LatticeType     = Other.LatticeType;
+    this->SubgraphList    = Other.SubgraphList;
+    this->LowField        = Other.LowField;
     return *this;
 }
 
 bool Graph::operator==( const Graph & Other)
 {
-    return (( this->Order == Other.Order) &&
-           ( this->LatticeConstant == Other.LatticeConstant) );
+    return (( this->Order           == Other.Order) &&
+           (  this->LatticeConstant == Other.LatticeConstant) &&
+           (  this->LatticeType     == Other.LatticeType) );
 }
 
 int Graph::Valency( int Site )
@@ -124,18 +129,20 @@ int Graph::Valency( int Site )
 
 SiteGraph::SiteGraph()
 {
-    Order = 0;
+    Order           = 0;
     LatticeConstant = 1;
-    Identifier = 0;
+    Identifier      = 0;
+    LatticeType     = Square;
     Sites.clear();
     SubgraphList.clear();
 }
 
-SiteGraph::SiteGraph(std::vector<std::pair <int, int> > & SiteList, int IdentNumber, int SiteCount, int LatticeConst, std::vector< std::pair<int, int> > & Subgraphs )
+SiteGraph::SiteGraph( std::vector< std::pair< int, int > > & SiteList, int IdentNumber, int SiteCount, int LatticeConst, Geometry Type, std::vector< std::pair<int, int> > & Subgraphs )
 {
     Identifier      = IdentNumber;
     Order           = SiteCount;
     LatticeConstant = LatticeConst;
+    LatticeType     = Type;
     SubgraphList    = Subgraphs;
     Sites           = SiteList;
 }
@@ -144,6 +151,7 @@ SiteGraph& SiteGraph::operator=( const SiteGraph & Other )
 {
     this->Order           = Other.Order;
     this->LatticeConstant = Other.LatticeConstant;
+    this->LatticeType     = Other.LatticeType;
     this->SubgraphList    = Other.SubgraphList;
     this->Sites           = Other.Sites;
     this->LowField        = Other.LowField;
@@ -204,13 +212,30 @@ void SiteGraph::PrintGraph()
 
 void SiteGraph::FindLatticeConstant()
 {
-    std::vector< std::vector< std::pair<int,int> > > SiteLists;
+    std::vector< std::vector< std::pair< int, int > > > SiteLists;
     SiteLists.push_back( this->Sites );
     int Counter = 1;
-    for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
+    int MaxElement;
+    switch( this->LatticeType )
+    {
+        case 0 :
+            MaxElement = 8;
+            break;
+        case 1 :
+            MaxElement = 12;
+            break;
+        case 2 :
+            MaxElement = 12;
+            break;
+        case 3 :
+            MaxElement = 12;
+            break;
+    }    
+
+    for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++ )
     {
         std::vector< std::pair< int, int> > TempSites = this->Sites;
-        Dihedral Transform( CurrentElement );
+        Dihedral Transform( CurrentElement, this->LatticeType );
         std::for_each( TempSites.begin(), TempSites.end(), Transform );
         std::sort( TempSites.begin(), TempSites.end() );
         bool GlobalShifted = false;
@@ -245,51 +270,125 @@ Dihedral::Dihedral()
     element = 0;
 }
 
-Dihedral::Dihedral( int Factor )
+Dihedral::Dihedral( int Element, Geometry Order )
 {
-    element = Factor;
+    element = Element;
+    factor  = Order;
 }
 
 void Dihedral::operator()( std::pair< int, int> & Coordinates )
 {
     int TempFirst;
     int TempSecond;
-    switch( this->element )
+    switch( this->factor )
     {
-        case 0 :
+        case 0 : //Square
+            switch( this->element )
+            {
+                case 0 :
+                    break;
+                case 1 :
+                    TempFirst          = Coordinates.first;
+                    Coordinates.first  = -Coordinates.second;
+                    Coordinates.second = TempFirst;
+                    break;
+                case 2 : 
+                    Coordinates.first  = -Coordinates.first;
+                    Coordinates.second = -Coordinates.second;
+                    break;
+                case 3 :
+                    TempSecond         = Coordinates.second;
+                    Coordinates.second = -Coordinates.first;
+                    Coordinates.first  = TempSecond;
+                    break;
+                case 4 : 
+                    Coordinates.first = -Coordinates.first;
+                    break;
+                case 5 :
+                    Coordinates.second = -Coordinates.second;
+                    break;
+                case 6 :
+                    TempFirst          = -Coordinates.first;
+                    TempSecond         = -Coordinates.second;
+                    Coordinates.first  = TempSecond;
+                    Coordinates.second = TempFirst;
+                    break;
+                case 7 : 
+                    TempFirst          = Coordinates.first;
+                    TempSecond         = Coordinates.second;
+                    Coordinates.first  = TempSecond;
+                    Coordinates.second = TempFirst;
+                    break;
+            }
             break;
-        case 1 :
-            TempFirst          = Coordinates.first;
-            Coordinates.first  = -Coordinates.second;
-            Coordinates.second = TempFirst;
-            break;
-        case 2 : 
-            Coordinates.first  = -Coordinates.first;
-            Coordinates.second = -Coordinates.second;
-            break;
+
+        case 1 : //Triangular
+        case 2 :
         case 3 :
-            TempSecond         = Coordinates.second;
-            Coordinates.second = -Coordinates.first;
-            Coordinates.first  = TempSecond;
+            switch( this->element )
+            {
+                case 0 : // Identity
+                    break;
+                case 1 : // Rotate counter clockwise by pi/3
+                    TempFirst          = Coordinates.first;
+                    TempSecond         = Coordinates.second;
+                    Coordinates.first  = TempFirst - TempSecond;
+                    Coordinates.second = TempSecond + TempFirst;
+                    break;
+                case 2 : // Rotate counter clockwise by 2pi/3
+                    TempFirst          = Coordinates.first;
+                    TempSecond         = Coordinates.second;
+                    Coordinates.first  = -TempFirst - TempSecond;
+                    Coordinates.second = TempFirst;
+                    break;
+                case 3 : // Rotate counterclockwise by pi
+                    Coordinates.first  = -Coordinates.first;
+                    Coordinates.second = -Coordinates.second;
+                    break;
+                case 4 : // Rotate counterclockwise by 4pi/3
+                    Coordinates.first  = -Coordinates.first;
+                    Coordinates.second = -Coordinates.second;
+                    TempFirst          = Coordinates.first;
+                    TempSecond         = Coordinates.second;
+                    Coordinates.first  = TempFirst - TempSecond;
+                    Coordinates.second = TempSecond + TempFirst;
+                    break;
+                case 5 : // Rotate counterclockwise by 5pi/3
+                    Coordinates.first  = -Coordinates.first;
+                    Coordinates.second = -Coordinates.second;
+                    TempFirst          = Coordinates.first;
+                    TempSecond         = Coordinates.second;
+                    Coordinates.first  = -TempFirst - TempSecond;
+                    Coordinates.second = TempFirst;
+                    break;
+                case 6 : // Flip along a_1
+                    Coordinates.first  = Coordinates.first + Coordinates.second;
+                    Coordinates.second = -Coordinates.second;
+                    break;
+                case 7 : // Flip along a_2
+                    Coordinates.second = Coordinates.first + Coordinates.second;
+                    Coordinates.first  = -Coordinates.first;
+                    break;
+                case 8 : // Flip along a_2 - a_1
+                    TempFirst          = Coordinates.first;
+                    TempSecond         = Coordinates.second;
+                    Coordinates.first  = -TempSecond;
+                    Coordinates.second = -TempFirst;
+                    break;
+                case 9 : // Flip along vertical
+                    Coordinates.first  = -(Coordinates.first + Coordinates.second);
+                    break;
+                case 10 : // Flip through one edge
+                    TempFirst          = Coordinates.first;
+                    Coordinates.first  = Coordinates.second;
+                    Coordinates.second = TempFirst;
+                    break;
+                case 11 : // Flip through remaining edge
+                    Coordinates.second = -(Coordinates.first + Coordinates.second);
+                    break;
+            }
             break;
-        case 4 : 
-            Coordinates.first = -Coordinates.first;
-            break;
-        case 5 :
-            Coordinates.second = -Coordinates.second;
-            break;
-        case 6 :
-            TempFirst          = -Coordinates.first;
-            TempSecond         = -Coordinates.second;
-            Coordinates.first  = TempSecond;
-            Coordinates.second = TempFirst;
-            break;
-        case 7 : 
-            TempFirst          = Coordinates.first;
-            TempSecond         = Coordinates.second;
-            Coordinates.first  = TempSecond;
-            Coordinates.second = TempFirst;
-            break;
+    
     }
 }
 
@@ -298,59 +397,165 @@ void Dihedral::operator()( std::pair< std::pair< int, int >, std::pair< int, int
     int TempFirst;
     int TempSecond;
     
-    switch( this->element )
+    switch( this->factor )
     {
-        case 0 :
+        case 0 : // Square 
+            switch( this->element )
+            {
+                case 0 :
+                    break;
+                case 1 :
+                    TempFirst                 = Coordinates.first.first;
+                    Coordinates.first.first   = -Coordinates.first.second;
+                    Coordinates.first.second  = TempFirst;
+                    TempFirst                 = Coordinates.second.first;
+                    Coordinates.second.first  = -Coordinates.second.second;
+                    Coordinates.second.second = TempFirst;
+                    break;
+                case 2 : 
+                    Coordinates.first.first   = -Coordinates.first.first;
+                    Coordinates.first.second  = -Coordinates.first.second;
+                    Coordinates.second.first  = -Coordinates.second.first;
+                    Coordinates.second.second = -Coordinates.second.second;
+                    break;
+                case 3 :
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.second  = -Coordinates.first.first;
+                    Coordinates.first.first   = TempSecond;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.second = -Coordinates.second.first;
+                    Coordinates.second.first  = TempSecond;
+                    break;
+                case 4 : 
+                    Coordinates.first.first   = -Coordinates.first.first;
+                    Coordinates.second.first  = -Coordinates.second.first;
+                    break;
+                case 5 :
+                    Coordinates.first.second  = -Coordinates.first.second;
+                    Coordinates.second.second = -Coordinates.second.second;
+                    break;
+                case 6 :
+                    TempFirst                 = -Coordinates.first.first;
+                    TempSecond                = -Coordinates.first.second;
+                    Coordinates.first.first   = TempSecond;
+                    Coordinates.first.second  = TempFirst;
+                    TempFirst                 = -Coordinates.second.first;
+                    TempSecond                = -Coordinates.second.second;
+                    Coordinates.second.first  = TempSecond;
+                    Coordinates.second.second = TempFirst;
+                    break;
+                case 7 : 
+                    TempFirst                 = Coordinates.first.first;
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.first   = TempSecond;
+                    Coordinates.first.second  = TempFirst;
+                    TempFirst                 = Coordinates.second.first;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.first  = TempSecond;
+                    Coordinates.second.second = TempFirst;
+                    break;
+            }
             break;
-        case 1 :
-            TempFirst                 = Coordinates.first.first;
-            Coordinates.first.first   = -Coordinates.first.second;
-            Coordinates.first.second  = TempFirst;
-            TempFirst                 = Coordinates.second.first;
-            Coordinates.second.first  = -Coordinates.second.second;
-            Coordinates.second.second = TempFirst;
-            break;
-        case 2 : 
-            Coordinates.first.first   = -Coordinates.first.first;
-            Coordinates.first.second  = -Coordinates.first.second;
-            Coordinates.second.first  = -Coordinates.second.first;
-            Coordinates.second.second = -Coordinates.second.second;
-            break;
+        case 1 : //Triangular;
+        case 2 :
         case 3 :
-            TempSecond                = Coordinates.first.second;
-            Coordinates.first.second  = -Coordinates.first.first;
-            Coordinates.first.first   = TempSecond;
-            TempSecond                = Coordinates.second.second;
-            Coordinates.second.second = -Coordinates.second.first;
-            Coordinates.second.first  = TempSecond;
-            break;
-        case 4 : 
-            Coordinates.first.first   = -Coordinates.first.first;
-            Coordinates.second.first  = -Coordinates.second.first;
-            break;
-        case 5 :
-            Coordinates.first.second  = -Coordinates.first.second;
-            Coordinates.second.second = -Coordinates.second.second;
-            break;
-        case 6 :
-            TempFirst                 = -Coordinates.first.first;
-            TempSecond                = -Coordinates.first.second;
-            Coordinates.first.first   = TempSecond;
-            Coordinates.first.second  = TempFirst;
-            TempFirst                 = -Coordinates.second.first;
-            TempSecond                = -Coordinates.second.second;
-            Coordinates.second.first  = TempSecond;
-            Coordinates.second.second = TempFirst;
-            break;
-        case 7 : 
-            TempFirst                 = Coordinates.first.first;
-            TempSecond                = Coordinates.first.second;
-            Coordinates.first.first   = TempSecond;
-            Coordinates.first.second  = TempFirst;
-            TempFirst                 = Coordinates.second.first;
-            TempSecond                = Coordinates.second.second;
-            Coordinates.second.first  = TempSecond;
-            Coordinates.second.second = TempFirst;
+            switch( this->element )
+            {
+                case 0 : // Identity
+                    break;
+                case 1 : // Rotate counter clockwise by pi/3
+                    TempFirst                 = Coordinates.first.first;
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.first   = TempFirst - TempSecond;
+                    Coordinates.first.second  = TempSecond + TempFirst;
+                    TempFirst                 = Coordinates.second.first;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.first  = TempFirst - TempSecond;
+                    Coordinates.second.second = TempSecond + TempFirst;
+                    break;
+                case 2 : // Rotate counter clockwise by 2pi/3
+                    TempFirst                 = Coordinates.first.first;
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.first   = -TempFirst - TempSecond;
+                    Coordinates.first.second  = TempFirst;
+                    TempFirst                 = Coordinates.second.first;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.first  = -TempFirst - TempSecond;
+                    Coordinates.second.second = TempFirst;
+                    break;
+                case 3 : // Rotate counterclockwise by pi
+                    Coordinates.first.first   = -Coordinates.first.first;
+                    Coordinates.first.second  = -Coordinates.first.second;
+                    Coordinates.second.first  = -Coordinates.second.first;
+                    Coordinates.second.second = -Coordinates.second.second;
+                    break;
+                case 4 : // Rotate counterclockwise by 4pi/3
+                    Coordinates.first.first   = -Coordinates.first.first;
+                    Coordinates.first.second  = -Coordinates.first.second;
+                    TempFirst                 = Coordinates.first.first;
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.first   = TempFirst - TempSecond;
+                    Coordinates.first.second  = TempSecond + TempFirst;
+                    Coordinates.second.first  = -Coordinates.second.first;
+                    Coordinates.second.second = -Coordinates.second.second;
+                    TempFirst                 = Coordinates.second.first;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.first  = TempFirst - TempSecond;
+                    Coordinates.second.second = TempSecond + TempFirst;
+                    break;
+                case 5 : // Rotate counterclockwise by 5pi/3
+                    Coordinates.first.first   = -Coordinates.first.first;
+                    Coordinates.first.second  = -Coordinates.first.second;
+                    TempFirst                 = Coordinates.first.first;
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.first   = -TempFirst - TempSecond;
+                    Coordinates.first.second  = TempFirst;
+                    Coordinates.second.first  = -Coordinates.second.first;
+                    Coordinates.second.second = -Coordinates.second.second;
+                    TempFirst                 = Coordinates.second.first;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.first  = -TempFirst - TempSecond;
+                    Coordinates.second.second = TempFirst;
+                    break;
+                case 6 : // Flip along a_1
+                    Coordinates.first.first   = Coordinates.first.first + Coordinates.first.second;
+                    Coordinates.first.second  = -Coordinates.first.second;
+                    Coordinates.second.first  = Coordinates.second.first + Coordinates.second.second;
+                    Coordinates.second.second = -Coordinates.second.second;
+                    break;
+                case 7 : // Flip along a_2
+                    Coordinates.first.second  = Coordinates.first.first + Coordinates.first.second;
+                    Coordinates.first.first   = -Coordinates.first.first;
+                    Coordinates.second.second = Coordinates.second.first + Coordinates.second.second;
+                    Coordinates.second.first  = -Coordinates.second.first;
+                    break;
+                case 8 : // Flip along a_2 - a_1
+                    TempFirst                 = Coordinates.first.first;
+                    TempSecond                = Coordinates.first.second;
+                    Coordinates.first.first   = -TempSecond;
+                    Coordinates.first.second  = -TempFirst;
+                    TempFirst                 = Coordinates.second.first;
+                    TempSecond                = Coordinates.second.second;
+                    Coordinates.second.first  = -TempSecond;
+                    Coordinates.second.second = -TempFirst;
+                    break;
+                case 9 : // Flip along vertical
+                    Coordinates.first.first   = -(Coordinates.first.first + Coordinates.first.second);
+                    Coordinates.second.first  = -(Coordinates.second.first + Coordinates.second.second);
+                    break;
+                case 10 : // Flip through one edge
+                    TempFirst                 = Coordinates.first.first;
+                    Coordinates.first.first   = Coordinates.first.second;
+                    Coordinates.first.second  = TempFirst;
+                    TempFirst                 = Coordinates.second.first;
+                    Coordinates.second.first  = Coordinates.second.second;
+                    Coordinates.second.second = TempFirst;
+                    break;
+                case 11 : // Flip through remaining edge
+                    Coordinates.first.second  = -(Coordinates.first.first + Coordinates.first.second);
+                    Coordinates.second.second = -(Coordinates.second.first + Coordinates.second.second);
+                    break;
+            }
             break;
     }
 }
@@ -358,12 +563,30 @@ void Dihedral::operator()( std::pair< std::pair< int, int >, std::pair< int, int
 bool SiteGraph::operator==( const SiteGraph & Other )
 {
     if( ( Other.LatticeConstant == this->LatticeConstant ) &&
+        ( Other.LatticeType == this->LatticeType ) &&
         ( Other.Order == this->Order) )
     {
-        for( int currentFactor = 0; currentFactor < 8; currentFactor++ )
+        int MaxElement;
+        switch( this->LatticeType )
+        {
+            case 0:
+                MaxElement = 8;
+                break;
+            case 1:
+                MaxElement = 12;
+                break;
+            case 2:
+                MaxElement = 12;
+                break;
+            case 3:
+                MaxElement = 12;
+                break;
+        }    
+        
+        for( int currentFactor = 0; currentFactor < MaxElement; currentFactor++ )
         {
             std::vector< std::pair< int, int > > SitesCopy = Other.Sites;
-            Dihedral Transform( currentFactor );
+            Dihedral Transform( currentFactor, this->LatticeType );
             std::for_each( SitesCopy.begin(), SitesCopy.end(), Transform );
             std::sort( SitesCopy.begin(), SitesCopy.end() );
             
@@ -417,11 +640,27 @@ int SiteGraph::SiteDegree( int xIndex, int yIndex )
 void SiteGraph::MakeCanonical()
 {
     std::vector< std::pair< int, int > > CanonicalSites;
-    for( int currentFactor = 0; currentFactor < 8; currentFactor++ )
+    int MaxElement;
+    switch( this->LatticeType )
+    {
+        case 0:
+            MaxElement = 8;
+            break;
+        case 1:
+            MaxElement = 12;
+            break;
+        case 2:
+            MaxElement = 12;
+            break;
+        case 3:
+            MaxElement = 12;
+            break;
+    }    
+    for( int currentFactor = 0; currentFactor < MaxElement; currentFactor++ )
     {
         std::vector< std::pair< int, int > > SitesCopy = this->Sites;
 
-        Dihedral Transform( currentFactor );
+        Dihedral Transform( currentFactor, this->LatticeType );
         std::for_each( SitesCopy.begin(), SitesCopy.end(), Transform );
         std::sort( SitesCopy.begin(), SitesCopy.end() );
         std::pair< int, int > shift = std::make_pair( -SitesCopy.front().first, -SitesCopy.front().second );
@@ -460,15 +699,17 @@ BondGraph::BondGraph()
     Order           = 0;
     LatticeConstant = 1;
     Identifier      = 0;
+    LatticeType     = Square;
     Bonds.clear();
     SubgraphList.clear();
 }
 
-BondGraph::BondGraph(std::vector< std::pair< std::pair <int, int>, std::pair<int, int> > > & BondList, int IdentNumber, int BondNumber, int LatticeConst, std::vector< std::pair< int, int > > & Subgraphs )
+BondGraph::BondGraph(std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > & BondList, int IdentNumber, int BondNumber, int LatticeConst, Geometry Type, std::vector< std::pair< int, int > > & Subgraphs )
 {
     Identifier      = IdentNumber;
     Order           = BondNumber;
     LatticeConstant = LatticeConst;
+    LatticeType     = Type;
     SubgraphList    = Subgraphs;
     Bonds           = BondList;
 }
@@ -477,6 +718,7 @@ BondGraph& BondGraph::operator=( const BondGraph & Other )
 {
     this->Order           = Other.Order;
     this->LatticeConstant = Other.LatticeConstant;
+    this->LatticeType     = Other.LatticeType;
     this->SubgraphList    = Other.SubgraphList;
     this->Bonds           = Other.Bonds;
     this->LowField        = Other.LowField;
@@ -485,12 +727,28 @@ BondGraph& BondGraph::operator=( const BondGraph & Other )
 
 bool BondGraph::operator==( const BondGraph & Other )
 {
-    if( (Other.Order == this->Order) )
+    if( ( Other.Order == this->Order ) && ( Other.LatticeType == this->LatticeType ) )
     {
-        for( int currentFactor = 0; currentFactor < 8; currentFactor++ )
+        int MaxElement;
+        switch( this->LatticeType )
+        {
+            case 0:
+                MaxElement = 8;
+                break;
+            case 1:
+                MaxElement = 12;
+                break;
+            case 2:
+                MaxElement = 12;
+                break;
+            case 3:
+                MaxElement = 12;
+                break;
+        }    
+        for( int currentFactor = 0; currentFactor < MaxElement; currentFactor++ )
         {
             std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > BondsCopy = Other.Bonds;
-            Dihedral Transform( currentFactor );
+            Dihedral Transform( currentFactor, this->LatticeType );
             std::for_each( BondsCopy.begin(), BondsCopy.end(), Transform );
             for( unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++ )
             {
@@ -545,7 +803,7 @@ void BondGraph::AddBond( std::pair< int, int > FirstSite, std::pair< int, int > 
     this->Bonds.insert( this->Bonds.begin() + InsertCounter, std::make_pair( FirstSite, SecondSite ) );
 }
 
-void BondGraph::RemoveBond( std::pair<int, int > FirstSite, std::pair<int, int > SecondSite )
+void BondGraph::RemoveBond( std::pair< int, int > FirstSite, std::pair< int, int > SecondSite )
 {
     unsigned int EraseCounter = 0;
     while( this->Bonds[ EraseCounter ].first <= FirstSite && this->Bonds[ EraseCounter ].second <= SecondSite && EraseCounter < this->Bonds.size() )
@@ -599,11 +857,27 @@ void BondGraph::MakeCanonical()
 {
     int GlobalGraphKey = 0;
     std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > CanonicalBonds;
-    for( int currentFactor = 0; currentFactor < 8; currentFactor++ )
+    int MaxElement;
+    switch( this->LatticeType )
+    {
+        case 0:
+            MaxElement = 8;
+            break;
+        case 1:
+            MaxElement = 12;
+            break;
+        case 2:
+            MaxElement = 12;
+            break;
+        case 3:
+            MaxElement = 12;
+            break;
+    }    
+    for( int currentFactor = 0; currentFactor < MaxElement; currentFactor++ )
     {
         int LocalGraphKey = 0;
         std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > BondsCopy = this->Bonds;
-        Dihedral Transform( currentFactor );
+        Dihedral Transform( currentFactor, this->LatticeType );
         std::for_each( BondsCopy.begin(), BondsCopy.end(), Transform );
         for(unsigned int CurrentBond = 0; CurrentBond < BondsCopy.size(); CurrentBond++ )
         {
@@ -661,10 +935,27 @@ void BondGraph::FindLatticeConstant()
     std::vector< std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > > BondLists;
     BondLists.push_back( this->Bonds );
     int Counter = 1;
-    for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++ )
+    int MaxElement;
+    switch( this->LatticeType )
     {
-        std::vector< std::pair< std::pair< int, int>, std::pair< int, int > > > TempBonds = this->Bonds;
-        Dihedral Transform( CurrentElement );
+        case 0:
+            MaxElement = 8;
+            break;
+        case 1:
+            MaxElement = 12;
+            break;
+        case 2:
+            MaxElement = 12;
+            break;
+        case 3:
+            MaxElement = 12;
+            break;
+    }    
+
+    for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++ )
+    {
+        std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > TempBonds = this->Bonds;
+        Dihedral Transform( CurrentElement, this->LatticeType );
         std::for_each( TempBonds.begin(), TempBonds.end(), Transform );
         for( unsigned int CurrentBond = 0; CurrentBond < TempBonds.size(); CurrentBond++ )
         {
@@ -733,63 +1024,128 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & graphs, 
         int tid;
         int gid;
         int MaxSize = omp_get_num_procs();
-        for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.size(); CurrentGraphGroup++)
+        for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= graphs.back().size(); CurrentGraphGroup++)
         {
-            #pragma omp parallel private(tid, gid, NewSite, NewGraph, OldGraph) shared(MaxSize, CurrentGraphGroup, NewGraphs, GlobalIdentifier) num_threads( MaxSize )
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, NewGraphs, GlobalIdentifier) num_threads( MaxSize )
             {
                 tid = omp_get_thread_num();
                 gid = tid + CurrentGraphGroup * MaxSize;
                 if ( (unsigned int) gid < graphs.back().size() )
                 {
                     std::pair<int,int> NewSite;
-                    SiteGraph OldGraph = graphs.back()[ gid ];
+                    const SiteGraph OldGraph = graphs.back()[ gid ];
                     SiteGraph NewGraph;
-                    for( int CurrentSite = 0; CurrentSite < OldGraph.Sites.size(); CurrentSite++)
+                    
+                    for( unsigned int CurrentSite = 0; CurrentSite < OldGraph.Sites.size(); CurrentSite++)
                     {
-                        for( int i = 0; i < 4; i++ )
+
+                        switch( OldGraph.LatticeType )
                         {
-                            switch ( i )
-                            {
-                                case 0 :
-                                    NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first + 1, OldGraph.Sites[ CurrentSite ].second );
-                                    break;
-                                case 1 :
-                                    NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first, OldGraph.Sites[ CurrentSite ].second + 1 );
-                                    break;
-                                case 2 :
-                                    NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first - 1, OldGraph.Sites[ CurrentSite ].second );
-                                    break;
-                                case 3 :
-                                    NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first , OldGraph.Sites[ CurrentSite ].second - 1 );
-                                    break;
-                            }
-            
-                            if( !std::binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), NewSite ) )
-                            {
-                                NewGraph = OldGraph;
-                                NewGraph.AddSite( NewSite.first, NewSite.second );
-                                NewGraph.Order = OldGraph.Order + 1;
-                                NewGraph.MakeCanonical();
-                                NewGraph.GenerateAdjacencyList();
-                                
-                                bool Exists = false;
-                        
-                                #pragma omp critical
+                            case 0 : // Square
+                                for( int i = 0; i < 4; i++ )
                                 {
-                                    for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                                    switch ( i )
                                     {
-                                        Exists = Exists || ( NewGraph.Sites == NewGraphs[ CurrentIndex ].Sites );
-                                        //Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
+                                        case 0 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first + 1, OldGraph.Sites[ CurrentSite ].second );
+                                            break;
+                                        case 1 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first, OldGraph.Sites[ CurrentSite ].second + 1 );
+                                            break;
+                                        case 2 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first - 1, OldGraph.Sites[ CurrentSite ].second );
+                                            break;
+                                        case 3 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first , OldGraph.Sites[ CurrentSite ].second - 1 );
+                                            break;
                                     }
-                                    if( !Exists )
+                    
+                                    if( !std::binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), NewSite ) )
                                     {
-                                        NewGraph.Identifier = ++GlobalIdentifier;
-                                        NewGraph.FindLatticeConstant();
-                                        NewGraph.LowField = false;
-                                        NewGraphs.push_back( NewGraph );
+                                        NewGraph = OldGraph;
+                                        NewGraph.AddSite( NewSite.first, NewSite.second );
+                                        NewGraph.Order = OldGraph.Order + 1;
+                                        NewGraph.MakeCanonical();
+                                        NewGraph.GenerateAdjacencyList();
+                                        
+                                        bool Exists = false;
+                                
+                                        #pragma omp critical
+                                        {
+                                            for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                                            {
+                                                Exists = Exists || ( NewGraph.Sites == NewGraphs[ CurrentIndex ].Sites );
+                                                //Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
+                                            }
+                                            if( !Exists )
+                                            {
+                                                NewGraph.Identifier = ++GlobalIdentifier;
+                                                NewGraph.FindLatticeConstant();
+                                                NewGraph.LowField = false;
+                                                NewGraphs.push_back( NewGraph );
+                                            }
+                                        }
                                     }
                                 }
-                            }
+                                break;
+                            case 1 : // Triangle
+                                for( int i = 0; i < 6; i++ )
+                                {
+                                    switch ( i )
+                                    {
+                                        case 0 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first + 1, OldGraph.Sites[ CurrentSite ].second );
+                                            break;
+                                        case 1 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first, OldGraph.Sites[ CurrentSite ].second + 1 );
+                                            break;
+                                        case 2 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first - 1, OldGraph.Sites[ CurrentSite ].second );
+                                            break;
+                                        case 3 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first , OldGraph.Sites[ CurrentSite ].second - 1 );
+                                            break;
+                                        case 4 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first - 1, OldGraph.Sites[ CurrentSite ].second + 1 );
+                                            break;
+                                        case 5 :
+                                            NewSite = std::make_pair( OldGraph.Sites[ CurrentSite ].first + 1, OldGraph.Sites[ CurrentSite ].second - 1 );
+                                            break;
+                                    }
+                    
+                                    if( !std::binary_search( OldGraph.Sites.begin(), OldGraph.Sites.end(), NewSite ) )
+                                    {
+                                        NewGraph = OldGraph;
+                                        NewGraph.AddSite( NewSite.first, NewSite.second );
+                                        NewGraph.Order = OldGraph.Order + 1;
+                                        NewGraph.MakeCanonical();
+                                        NewGraph.GenerateAdjacencyList();
+                                        
+                                        bool Exists = false;
+                                
+                                        #pragma omp critical
+                                        {
+                                            for( unsigned int CurrentIndex = 0; CurrentIndex < NewGraphs.size(); CurrentIndex++ )
+                                            {
+                                                Exists = Exists || ( NewGraph.Sites == NewGraphs[ CurrentIndex ].Sites );
+                                                //Exists = Exists || (NewGraph.AdjacencyList == NewGraphs.at(CurrentIndex).AdjacencyList); 
+                                            }
+                                            if( !Exists )
+                                            {
+                                                NewGraph.Identifier = ++GlobalIdentifier;
+                                                NewGraph.FindLatticeConstant();
+                                                NewGraph.LowField = false;
+                                                NewGraphs.push_back( NewGraph );
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                                
+                            case 2 : // Kagome
+                                break;
+                            case 3 : // Honeycomb
+                                break;
                         }
                     }
                 }
@@ -832,10 +1188,10 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
                     }
                 }
             }
-            SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
+            SiteGraph NewGraph( SiteList, GlobalIdentifier++, CurrentOrder, 1, Square, Subgraphs );
             NewGraph.GenerateAdjacencyList();
             NewGraph.LowField = false;
-            graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
+            graphs[ CurrentGraphWidth - 1 ].push_back( NewGraph );
         }
     }
 }
@@ -872,10 +1228,10 @@ void ConstructRectangularSiteGraphs(std::vector< std::vector< SiteGraph > > & gr
                     }
                 }
             }
-            SiteGraph NewGraph(SiteList, GlobalIdentifier++, CurrentOrder, 1, Subgraphs);
+            SiteGraph NewGraph( SiteList, GlobalIdentifier++, CurrentOrder, 1, Square, Subgraphs );
             NewGraph.GenerateAdjacencyList();
             NewGraph.LowField = false;
-            graphs.at(CurrentGraphWidth - 1).push_back(NewGraph);
+            graphs[ CurrentGraphWidth - 1 ].push_back( NewGraph );
         }
     }
 }
@@ -892,9 +1248,9 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
         int tid;
         int gid;
         int MaxSize = omp_get_num_procs();
-        for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= GraphList.size(); CurrentGraphGroup++)
+        for( unsigned int CurrentGraphGroup = 0; CurrentGraphGroup*MaxSize <= graphs.back().size(); CurrentGraphGroup++)
         {
-            #pragma omp parallel private(tid, gid, NewSite, NewBond, NewGraph, OldGraph) shared(MaxSize, CurrentGraphGroup, NewGraphs, GlobalIdentifier) num_threads( MaxSize )
+            #pragma omp parallel private(tid, gid) shared(MaxSize, CurrentGraphGroup, NewGraphs, GlobalIdentifier) num_threads( MaxSize )
             {
                 tid = omp_get_thread_num();
                 gid = tid + CurrentGraphGroup * MaxSize;
@@ -904,7 +1260,7 @@ void ConstructBondBasedGraphs(std::vector< std::vector< BondGraph > > & graphs, 
                     std::pair< std::pair< int, int>, std::pair< int, int> > NewBond;
                     std::pair< int, int> NewSite;
                     BondGraph NewGraph;
-                    for( int CurrentBond = 0; CurrentBond < OldGraph.Bonds.size(); CurrentBond++ )
+                    for( unsigned int CurrentBond = 0; CurrentBond < OldGraph.Bonds.size(); CurrentBond++ )
                     {
                         for( int i = 0; i < 6; i++)
                         {
@@ -1046,9 +1402,25 @@ void FindSubgraphs(std::vector< SiteGraph > & GraphList)
                     DistinctReps.resize(GraphList[ CurrentCheck ].LatticeConstant);
                     DistinctReps.push_back( GraphList[ CurrentCheck ].Sites );
 
-                    for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                    int MaxElement;
+                    switch( GraphList[ CurrentCheck ].LatticeType )
                     {
-                        Dihedral Transform(CurrentElement);
+                        case 0:
+                            MaxElement = 8;
+                            break;
+                        case 1:
+                            MaxElement = 12;
+                            break;
+                        case 2:
+                            MaxElement = 12;
+                            break;
+                        case 3:
+                            MaxElement = 12;
+                            break;
+                    }    
+                    for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++)
+                    {
+                        Dihedral Transform( CurrentElement, GraphList[ CurrentCheck ].LatticeType );
                         std::vector< std::pair< int, int> > ThisRep = GraphList[ CurrentCheck ].Sites;
                         std::for_each(ThisRep.begin(), ThisRep.end(), Transform);
                         std::sort(ThisRep.begin(), ThisRep.end());
@@ -1154,10 +1526,26 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList)
                             std::vector< std::vector< std::pair< int, int> > > DistinctReps;
                             DistinctReps.push_back( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Sites );
 
-                            for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                            int MaxElement;
+                            switch( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType )
+                            {
+                                case 0:
+                                    MaxElement = 8;
+                                    break;
+                                case 1:
+                                    MaxElement = 12;
+                                    break;
+                                case 2:
+                                    MaxElement = 12;
+                                    break;
+                                case 3:
+                                    MaxElement = 12;
+                                    break;
+                            }    
+                            for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++)
                             {
                          
-                                Dihedral Transform(CurrentElement);
+                                Dihedral Transform( CurrentElement, GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType );
                                 std::vector< std::pair< int, int> > ThisRep = GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Sites;
                                 std::for_each( ThisRep.begin(), ThisRep.end(), Transform );
                                 std::sort( ThisRep.begin(), ThisRep.end() );
@@ -1263,11 +1651,27 @@ void FindSubgraphs(std::vector< std::vector< SiteGraph > > & GraphList, unsigned
                         {
                             std::vector< std::vector< std::pair< int, int> > > DistinctReps;
                             DistinctReps.push_back( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Sites );
+                            int MaxElement;
+                            switch( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType )
+                            {
+                                case 0:
+                                    MaxElement = 8;
+                                    break;
+                                case 1:
+                                    MaxElement = 12;
+                                    break;
+                                case 2:
+                                    MaxElement = 12;
+                                    break;
+                                case 3:
+                                    MaxElement = 12;
+                                    break;
+                            }    
 
-                            for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                            for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++)
                             {
                          
-                                Dihedral Transform(CurrentElement);
+                                Dihedral Transform( CurrentElement, GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType );
                                 std::vector< std::pair< int, int> > ThisRep = GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Sites;
                                 std::for_each( ThisRep.begin(), ThisRep.end(), Transform );
                                 std::sort( ThisRep.begin(), ThisRep.end() );
@@ -1372,10 +1776,26 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList)
                             vector< vector< std::pair< std::pair<int,int>, std::pair<int,int> > > > DistinctReps;
                             DistinctReps.push_back( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Bonds );
 
-                            for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                            int MaxElement;
+                            switch( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType )
+                            {
+                                case 0:
+                                    MaxElement = 8;
+                                    break;
+                                case 1:
+                                    MaxElement = 12;
+                                    break;
+                                case 2:
+                                    MaxElement = 12;
+                                    break;
+                                case 3:
+                                    MaxElement = 12;
+                                    break;
+                            }    
+                            for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++)
                             {
                                 
-                                Dihedral Transform(CurrentElement);
+                                Dihedral Transform( CurrentElement, GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType );
                                 vector< std::pair< std::pair<int,int>, std::pair<int,int> > > ThisRep = GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Bonds;
                                 for_each(ThisRep.begin(), ThisRep.end(), Transform);
                                 for(unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
@@ -1494,11 +1914,27 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
                         {
                             vector< vector< std::pair< std::pair<int,int>, std::pair<int,int> > > > DistinctReps;
                             DistinctReps.push_back( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Bonds );
+                            int MaxElement;
+                            switch( GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType )
+                            {
+                                case 0:
+                                    MaxElement = 8;
+                                    break;
+                                case 1:
+                                    MaxElement = 12;
+                                    break;
+                                case 2:
+                                    MaxElement = 12;
+                                    break;
+                                case 3:
+                                    MaxElement = 12;
+                                    break;
+                            }    
 
-                            for( int CurrentElement = 1; CurrentElement < 8; CurrentElement++)
+                            for( int CurrentElement = 1; CurrentElement < MaxElement; CurrentElement++)
                             {
                                 
-                                Dihedral Transform(CurrentElement);
+                                Dihedral Transform( CurrentElement, GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].LatticeType );
                                 vector< std::pair< std::pair<int,int>, std::pair<int,int> > > ThisRep = GraphList[ CurrentCheckHeight ][ CurrentCheckWidth ].Bonds;
                                 for_each(ThisRep.begin(), ThisRep.end(), Transform);
                                 for(unsigned int CurrentBond = 0; CurrentBond < ThisRep.size(); CurrentBond++)
@@ -1591,9 +2027,10 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
         }
     }
 }
-void WriteGraphsToFile(std::vector<SiteGraph> & GraphList, string File)
+
+void WriteGraphsToFile( std::vector< SiteGraph > & GraphList, string File )
 {
-    ofstream Output(File.c_str());
+    ofstream Output( File.c_str() );
     for( unsigned int CurrentGraph = 0; CurrentGraph < GraphList.size(); CurrentGraph++)
     {
         Output<<GraphList.at(CurrentGraph).Identifier<<" ";

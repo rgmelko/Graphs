@@ -472,11 +472,11 @@ void Dihedral::operator()( std::pair< std::pair< int, int > , std::pair< int, in
                 case 1 : // Rotate counter clockwise by pi/3
                     TempFirst                 = Coordinates.first.first;
                     TempSecond                = Coordinates.first.second;
-                    Coordinates.first.first   = TempFirst - TempSecond;
+                    Coordinates.first.first   = -TempSecond;
                     Coordinates.first.second  = TempSecond + TempFirst;
                     TempFirst                 = Coordinates.second.first;
                     TempSecond                = Coordinates.second.second;
-                    Coordinates.second.first  = TempFirst - TempSecond;
+                    Coordinates.second.first  = -TempSecond;
                     Coordinates.second.second = TempSecond + TempFirst;
                     break;
                 case 2 : // Rotate counter clockwise by 2pi/3
@@ -496,18 +496,14 @@ void Dihedral::operator()( std::pair< std::pair< int, int > , std::pair< int, in
                     Coordinates.second.second = -Coordinates.second.second;
                     break;
                 case 4 : // Rotate counterclockwise by 4pi/3
-                    Coordinates.first.first   = -Coordinates.first.first;
-                    Coordinates.first.second  = -Coordinates.first.second;
                     TempFirst                 = Coordinates.first.first;
                     TempSecond                = Coordinates.first.second;
-                    Coordinates.first.first   = TempFirst - TempSecond;
-                    Coordinates.first.second  = TempSecond + TempFirst;
-                    Coordinates.second.first  = -Coordinates.second.first;
-                    Coordinates.second.second = -Coordinates.second.second;
+                    Coordinates.first.first   = TempSecond;
+                    Coordinates.first.second  = -TempSecond - TempFirst;
                     TempFirst                 = Coordinates.second.first;
                     TempSecond                = Coordinates.second.second;
-                    Coordinates.second.first  = TempFirst - TempSecond;
-                    Coordinates.second.second = TempSecond + TempFirst;
+                    Coordinates.second.first  = TempSecond;
+                    Coordinates.second.second = -TempSecond - TempFirst;
                     break;
                 case 5 : // Rotate counterclockwise by 5pi/3
                     Coordinates.first.first   = -Coordinates.first.first;
@@ -1932,6 +1928,7 @@ void FindSubgraphs(vector< vector< BondGraph > > & GraphList, unsigned int Index
                 gid = tid + (CurrentGraphGroup * MaxSize);
                 if( (unsigned int) gid < GraphList[ CurrentGraphHeight ].size() )
                 {
+                    GraphList[ CurrentGraphHeight ][ gid ].SubgraphList.clear();
                     GraphList[ CurrentGraphHeight ][ gid ].SubgraphList.push_back(std::make_pair(GraphList[ CurrentGraphHeight ][ gid ].NumberSites(), 0));
                     for( unsigned int CurrentCheckHeight = 1; CurrentCheckHeight < CurrentGraphHeight; CurrentCheckHeight++ )
                     {

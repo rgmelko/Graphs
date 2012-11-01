@@ -13,6 +13,9 @@
 
 using namespace std;
 
+
+enum Geometry { Square, Triangular, Kagome, Honeycomb };
+
 /*! \class Graph
 
 \brief A superclass containing information about any type of graph
@@ -34,6 +37,8 @@ class Graph
         int Identifier;
         //! A flag to show whether a graph is site- or bond-based
         bool LowField;
+        //! The geometry of the lattice
+        Geometry LatticeType;
         //! A vector containing pairs of indices, showing which sites in the graph are connected (each site has a unique index)
         std::vector< std::pair<int, int> > AdjacencyList;
         //! A vector containing pairs of indices, listing the Identifiers of graphs which are embeddable in this graph and how many ways this is possible
@@ -46,18 +51,20 @@ class Graph
         \param LatticeConst The number of distinct ways to embed this graph in the lattice
         \param ElementCount The number of elements in the graph
         \param IdentNumber The unique number which identifies this specific graph
+        \param Type The specific geometry of the lattice
         \param Subgraphs A list of the subgraphs of the graph, and the number of times each subgraph is embeddable in the graph
         */
-        Graph(int, int, int, std::vector< std::pair<int, int> > & );
+        Graph(int, int, int, Geometry, std::vector< std::pair<int, int> > & );
         /*! \brief Initializes a general graph object with the given parameters
         \param LatticeConst The number of distinct ways to embed this graph in the lattice
         \param ElementCount The number of elements in the graph
         \param IdentNumber The unique number which identifies this specific graph
+        \param Type The specific geometry of the lattice
         \param Adjacency A list of which sites in the graph are connected
         \param Subgraphs A list of the subgraphs of the graph, and the number of times each subgraph is embeddable in the graph
         */
 
-        Graph(int, int, int, std::vector< std::pair<int, int> > & , std::vector< std::pair<int, int> > & Subgraphs );
+        Graph(int, int, int, Geometry, std::vector< std::pair<int, int> > & , std::vector< std::pair<int, int> > & );
         /*! \brief Assigns the value of one Graph to another
         \param Other A reference to the graph which is being copied
         \returns A reference to a new graph, which is a copy of the referenced graph
@@ -76,7 +83,7 @@ class Graph
 };
 
 /*! \class SiteGraph
-\brief A sublcass of Graph which describes site-based graphs
+\brief A subclass of Graph which describes site-based graphs
 
 A site-based graph is one where the connections between sites are less important than the presence of the site at all. The graph is fully described by which sites are or are not present. If two sites are adjacent and present, they must be connected. This class has one additional member: Sites, which describes the real-space locations of the sites which are present
 */
@@ -94,9 +101,10 @@ class SiteGraph : public Graph
         \param IdentNumber The unique number identifying the graph
         \param SiteCount The number of sites in the graph
         \param LatticeConst The number of distinct ways to embed this graph in the lattice
+        \param Type The specific geometry of the lattice
         \param Subgraphs The list of subgraphs of this graph, and the number of ways each can be embedded in the graph
         */
-        SiteGraph(std::vector< std::pair<int, int> > & , int, int, int, std::vector< std::pair<int, int> > & );
+        SiteGraph(std::vector< std::pair<int, int> > & , int, int, int, Geometry, std::vector< std::pair<int, int> > & );
         /*! \brief Adds a site to the list of sites
         \param xIndex The x coordinate of the site
         \param yIndex The y coordinate of the site
@@ -206,9 +214,10 @@ class BondGraph : public Graph
         \param IdentNumber The unique number identifying the graph
         \param BondNumber The number of bonds in the graph
         \param LatticeConst The number of distinct ways to embed this graph in the lattice
+        \param Type The specific geometry of the lattice
         \param Subgraphs The list of subgraphs of this graph, and the number of ways each can be embedded in the graph
         */
-        BondGraph(std::vector< std::pair< std::pair<int, int>, std::pair<int,int> > > & , int, int, int, std::vector< std::pair<int, int> > & );
+        BondGraph(std::vector< std::pair< std::pair<int, int>, std::pair<int,int> > > & , int, int, int, Geometry, std::vector< std::pair<int, int> > & );
         /*! \brief Adds a bond to the list of bonds
         \param FirstSite The coordinates of the first end-point
         \param SecondSite The coordinates of the second end-point
@@ -325,6 +334,8 @@ class Dihedral
     public :
         //!Which element of the dihedral group to use for the transformation
         int element;
+        //!Which lattice is being manipulated - determines which dihedral group to use
+        Geometry factor;
 
         /*! Sets element to the default (0) which is the identity transformation
         */
@@ -332,13 +343,36 @@ class Dihedral
         /*! Sets element to an index describing which transformation to apply
         \param Factor The index which selects the transformation
         */
-        Dihedral(int);
+        Dihedral( int, Geometry );
         /*! Applies the transformation to a site
         \param Coordinates The coordinates of the site to be transformed
+        
+        Element controls which element of the group defined by factor is applied. Its values correspond to:
+            -# Square lattice:
+            -# Identity (do nothing)
+            -# Rotate 90 degrees counterclockwise
+            -# Rotate 180 degrees
+            -# Rotate 90 degrees clockwise
+            -# Reflect over the x axis
+            -# Reflect over the y axis
+            -# Reflect over the diagonal from the 2nd quadrant to the 4th quadrant
+            -# Reflect over the diagonal from the 1st quadrant to the 3rd quadrant
+        
         */
         void operator() (std::pair<int,int> & );
         /*! Applies the transformation to a bond
         \param Coordinates The coordinates of the end-points of the bond to be transformed
+        
+        Element controls which element of the group defined by factor is applied. Its values correspond to:
+            -# Identity (do nothing)
+            -# Rotate 90 degrees counterclockwise
+            -# Rotate 180 degrees
+            -# Rotate 90 degrees clockwise
+            -# Reflect over the x axis
+            -# Reflect over the y axis
+            -# Reflect over the diagonal from the 2nd quadrant to the 4th quadrant
+            -# Reflect over the diagonal from the 1st quadrant to the 3rd quadrant
+        
         */
         void operator() (std::pair< std::pair<int,int>, std::pair<int,int> > & );
 }; //Transform;
@@ -352,7 +386,7 @@ class Dihedral
 \param graphs A collection of graphs to start from, and to which the generated graphs will be appended
 \param FinalOrder The maximum order of the graphs which will be generated
 
-Starting with a list of sites, the function adds sites north and east, eliminating raphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
+Starting with a list of sites, the function adds sites, eliminating graphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
 
 First, the highest order of graphs present in the list is grabbed and the identifying number to start from is grabbed as well. Temporary storage for the new graphs is allocated as well. 
 
@@ -362,7 +396,7 @@ For each order up until the last one, each old graph is copied (so that a good c
 
 \snippet graphs-example.cpp Site get graph ready
 
-For each site, there are four possible positions to put a new site (north, east, south, west). For each possibility, the new site is generated, and then the function checks to see if it's already present in the site list. If not, it's a valid addition, and it's added to create a new site-based graph. The canonical form of the new graph is found and its adjacency list is generated so that we can see whether this new graph has already been generated.
+For each site, there are several (depending on the lattice geometry) possible positions to put a new site. For each possibility, the new site is generated, and then the function checks to see if it's already present in the site list. If not, it's a valid addition, and it's added to create a new site-based graph. The canonical form of the new graph is found and its adjacency list is generated so that we can see whether this new graph has already been generated.
 
 \snippet graphs-example.cpp Site make new graph 
 
@@ -383,7 +417,7 @@ void ConstructSiteBasedGraphs(std::vector< std::vector< SiteGraph > > & , int );
 \param graphs A collection of graphs to start from, and to which the generated graphs will be appended
 \param FinalOrder The maximum order of the graphs which will be generated
 
-Starting with a list of sites, the function adds bonds north and east, eliminating graphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
+Starting with a list of sites, the function adds bonds, eliminating graphs which are isomorphic to each other. This continues until all graphs of the maximum order are enumerated.
 
 First, the highest order of graphs present in the list is grabbed and the identifying number to start from is grabbed as well. Temporary storage for the new graphs is allocated as well. 
 
@@ -393,7 +427,7 @@ For each order up until the last one, each old graph is copied (so that a good c
 
 \snippet graphs-example.cpp Bond get graph ready
 
-For each bond, there are six possible positions to put a new bond - three on each endpoint. For each possibility, the new site is generated, and connected to whichever existing site is appropriate using NewBond, and then the function checks to see if it's already present in the bond list. If not, it's a valid addition, and it's added to create a new bond-based graph. The canonical form of the new graph is found and its adjacency list is generated so that we can see whether this new graph has already been generated.
+For each bond, there are several possible positions to put a new bond (it depends on the lattice geometry). For each possibility, the new site is generated, and connected to whichever existing site is appropriate using NewBond, and then the function checks to see if it's already present in the bond list. If not, it's a valid addition, and it's added to create a new bond-based graph. The canonical form of the new graph is found and its adjacency list is generated so that we can see whether this new graph has already been generated.
 
 \snippet graphs-example.cpp Bond make new graph 
 

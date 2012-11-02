@@ -29,11 +29,11 @@ int main()
     SiteGraph Start(SiteList, 0, 1, 1, Triangular, Empty); 
     testsites[0].resize(1);
     testsites[0][0] = Start;
-    for(unsigned int i = 1; i <= 2; i++)
+    for(unsigned int i = 1; i <= 4; i++)
     {
         ConstructSiteBasedGraphs(testsites, i);
         FindSubgraphs(testsites, i);
-        WriteGraphsToFile(testsites, "8sitebased.dat", i);
+        WriteGraphsToFile(testsites, "4triangle.dat", i);
     }
     /*
     vector< vector< BondGraph > > testbonds;
@@ -658,12 +658,6 @@ void SiteGraph::MakeCanonical()
             MaxElement = 12;
             break;
     }
-    cout<<"Starting sites: "<<endl;    
-    for(unsigned int i = 0; i < this->Sites.size(); i++)
-    {
-        cout<<"("<<this->Sites[i].first<<" "<<this->Sites[i].second<<")";
-    }
-    cout<<endl;
     for( int currentFactor = 0; currentFactor < MaxElement; currentFactor++ )
     {
         std::vector< std::pair< int, int > > SitesCopy = this->Sites;
@@ -671,12 +665,6 @@ void SiteGraph::MakeCanonical()
         Dihedral Transform( currentFactor, this->LatticeType );
         std::for_each( SitesCopy.begin(), SitesCopy.end(), Transform );
         std::sort( SitesCopy.begin(), SitesCopy.end() );
-        cout<<"Current Factor: "<<currentFactor<<endl;
-        for(unsigned int i = 0; i < SitesCopy.size(); i++)
-        {
-            cout<<"("<<SitesCopy[i].first<<" "<<SitesCopy[i].second<<")";
-        }
-        cout<<endl;
         std::pair< int, int > shift = std::make_pair( -SitesCopy.front().first, -SitesCopy.front().second );
         for( unsigned int CurrentSite = 0; CurrentSite < SitesCopy.size(); CurrentSite++ )
         {
@@ -693,17 +681,40 @@ void SiteGraph::MakeCanonical()
 
 void SiteGraph::GenerateAdjacencyList()
 {
+    this->AdjacencyList.clear();
     for( unsigned int CurrentSite = 0; CurrentSite < this->Sites.size(); CurrentSite++ )
     {
-        for( unsigned int CurrentIndex = CurrentSite + 1; CurrentIndex < this->Sites.size(); CurrentIndex++ )
+        switch( this->LatticeType )
         {
-            if( ( Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first && 
-                  Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second + 1 )  ||
-                ( Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second && 
-                  Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first + 1 ) ) 
-            {
-                AdjacencyList.push_back( std::make_pair( CurrentSite, CurrentIndex ) );
-            }
+            case 0 : //Square
+                for( unsigned int CurrentIndex = CurrentSite + 1; CurrentIndex < this->Sites.size(); CurrentIndex++ )
+                {
+                    if( ( Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first && 
+                          Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second + 1 )  ||
+                        ( Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second && 
+                          Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first + 1 ) ) 
+                    {
+                        AdjacencyList.push_back( std::make_pair( CurrentSite, CurrentIndex ) );
+                    }
+                }
+                break;
+            case 1 : //Triangular
+                for( unsigned int CurrentIndex = CurrentSite + 1; CurrentIndex < this->Sites.size(); CurrentIndex++ )
+                {
+                    if ( ( ( Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first && 
+                             Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second + 1 )  ||
+                           ( Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second && 
+                             Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first + 1 ) ) ||
+                           ( Sites[ CurrentIndex ].second == Sites[ CurrentSite ].second - 1 && 
+                             Sites[ CurrentIndex ].first  == Sites[ CurrentSite ].first + 1 ) )
+                    {
+                        AdjacencyList.push_back( std::make_pair( CurrentSite, CurrentIndex ) );
+                    }
+                }
+                break;
+            case 2 :
+            case 3 :
+                break;
         }
     }
 }

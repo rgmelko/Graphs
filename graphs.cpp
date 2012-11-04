@@ -1306,7 +1306,82 @@ void ConstructBondBasedGraphs( std::vector< std::vector< BondGraph > > & graphs,
                                 }
                                 break;
                             case 1 : //Triangle
+                                //There are three possible bond orientations
+                                if( OldGraph.Bonds[ CurrentBond ].second.first - OldGraph.Bonds[ CurrentBond ].first.first == 1 )
+                                {
+                                    if( OldGraph.Bonds[ CurrentBond ].second.second - OldGraph.Bonds[ CurrentBond ].first.second == 0 ) // Bond is horizontal
+                                    {
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first + 1, OldGraph.Bonds[ CurrentBond ].second.second );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite) ); // Add a bond on the right, in the a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first, OldGraph.Bonds[ CurrentBond ].second.second + 1 );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the right, in the a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first - 1, OldGraph.Bonds[ CurrentBond ].second.second + 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the right, in the a_2 - a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first + 1, OldGraph.Bonds[ CurrentBond ].second.second - 1);
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite) ); // Add a bond on the right, in the a_1 - a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first, OldGraph.Bonds[ CurrentBond ].second.second - 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the right, in the a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first - 1, OldGraph.Bonds[ CurrentBond ].second.second + 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the left, in the -a_1 + a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first - 1, OldGraph.Bonds[ CurrentBond ].second.second );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the left, in the -a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first, OldGraph.Bonds[ CurrentBond ].second.second - 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the left, in the -a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first, OldGraph.Bonds[ CurrentBond ].second.second + 1 );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the left, in the a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first + 1, OldGraph.Bonds[ CurrentBond ].second.second - 1 );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the left, in the a_1 - a_2 direction
+                                    }
+                                    else // Bond is in the a_1 - a_2 direction
+                                    {
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first - 1, OldGraph.Bonds[ CurrentBond ].second.second );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the bottom, in the -a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first , OldGraph.Bonds[ CurrentBond ].second.second - 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the bottom, in the -a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first + 1, OldGraph.Bonds[ CurrentBond ].second.second - 1 );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the bottom, in the a_1 - a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first + 1, OldGraph.Bonds[ CurrentBond ].second.second );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the bottom, in the a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first, OldGraph.Bonds[ CurrentBond ].second.second + 1);
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the bottom, in the a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first - 1, OldGraph.Bonds[ CurrentBond ].first.second );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].first ) ); // Add a bond on the top, in the -a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first , OldGraph.Bonds[ CurrentBond ].first.second - 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].first ) ); // Add a bond on the top, in the -a_2 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first - 1, OldGraph.Bonds[ CurrentBond ].first.second + 1 );
+                                        NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].first ) ); // Add a bond on the top, in the a_2 - a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first + 1, OldGraph.Bonds[ CurrentBond ].first.second );
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].first, NewSite ) ); // Add a bond on the top, in the a_1 direction
+                                        NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first, OldGraph.Bonds[ CurrentBond ].first.second + 1);
+                                        NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].first, NewSite ) ); // Add a bond on the top, in the a_2 direction
+                                    }
+                                }
+                                else //Bond is in the a_2 direction
+                                {
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first - 1, OldGraph.Bonds[ CurrentBond ].second.second );
+                                    NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the top, in the -a_1 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first - 1, OldGraph.Bonds[ CurrentBond ].second.second + 1 );
+                                    NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].second ) ); // Add a bond on the top, in the a_2 - a_1 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first + 1, OldGraph.Bonds[ CurrentBond ].second.second - 1 );
+                                    NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the top, in the a_1 - a_2 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first + 1, OldGraph.Bonds[ CurrentBond ].second.second );
+                                    NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the top, in the a_1 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].second.first, OldGraph.Bonds[ CurrentBond ].second.second + 1);
+                                    NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].second, NewSite ) ); // Add a bond on the top, in the a_2 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first - 1, OldGraph.Bonds[ CurrentBond ].first.second );
+                                    NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].first ) ); // Add a bond on the bottom, in the -a_1 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first , OldGraph.Bonds[ CurrentBond ].first.second - 1 );
+                                    NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].first ) ); // Add a bond on the bottom, in the -a_2 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first - 1, OldGraph.Bonds[ CurrentBond ].first.second + 1 );
+                                    NewBonds.push_back( std::make_pair( NewSite, OldGraph.Bonds[ CurrentBond ].first ) ); // Add a bond on the bottom, in the a_2 - a_1 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first + 1, OldGraph.Bonds[ CurrentBond ].first.second );
+                                    NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].first, NewSite ) ); // Add a bond on the bottom, in the a_1 direction
+                                    NewSite = std::make_pair( OldGraph.Bonds[ CurrentBond ].first.first + 1, OldGraph.Bonds[ CurrentBond ].first.second - 1);
+                                    NewBonds.push_back( std::make_pair( OldGraph.Bonds[ CurrentBond ].first, NewSite ) ); // Add a bond on the bottom, in the a_1 - a_2 direction
+                                }
+                                break;
                             case 2 : //Kagome
+                                break;
                             case 3 : //Honeycomb
                                 break;
                         }

@@ -79,7 +79,9 @@ class Graph
         \param Site The index of the site to check
         */
         int Valency( int Site);
-
+        /*! Looks up the number of transformations for this lattice type
+        */
+        int DihedralSize( );
 };
 
 /*! \class SiteGraph
@@ -174,6 +176,13 @@ class SiteGraph : public Graph
         The number of distinct representations is the lattice constant of the graph.
         */
         void FindLatticeConstant();
+        /*! \brief Generates the distinct representations of a graph under its dihedral group
+        \param Representations The empty list of representations which will be filled with all the ones which cannot be superimposed over one another
+        
+        Generates all representations of the graph using the \link Dihedal Dihedral \endlink class, then keeps those which are not superimposable over any others
+        */
+
+        void GenerateDistinctReps( std::vector< std::vector<  std::pair< int, int > > > & );
         /*! \brief Checks for isomorphism between two site-based graphs
         \param Other The sitegraph to check against
         \return True if the graphs are isomorphic, false otherwise
@@ -188,6 +197,11 @@ class SiteGraph : public Graph
 
         */ 
         bool operator==(const SiteGraph & );
+        /*! \param Determines if one graph is a subgraph of another, and if so, in how many ways
+        \param Other A reference to the site-based graph which may be a supergraph
+        \returns The number of ways to embed the graph in Other (0 if the graph is not a subgraph of Other)
+        */
+        int Embeddings(const SiteGraph & );
         /*! \brief Assigns the value of one SiteGraph to another
         \param Other A reference to the site-based graph which is being copied
         \returns A reference to a new site-based graph, which is a copy of the referenced graph
@@ -296,6 +310,14 @@ class BondGraph : public Graph
         The number of distinct representations is the lattice constant of the graph.
         */
         void FindLatticeConstant();
+        /*! \brief Generates the distinct representations of a graph under its dihedral group
+        \param Representations The empty list of representations which will be filled with all the ones which cannot be superimposed over one another
+        
+        Generates all representations of the graph using the \link Dihedal Dihedral \endlink class, then keeps those which are not superimposable over any others
+        */
+
+        void GenerateDistinctReps( std::vector< std::vector< std::pair< std::pair< int, int >, std::pair< int, int > > > > & );
+
         /*! \brief Counts the number of sites present in a bond list
         \return The total number of sites contained in the graph
         
@@ -317,6 +339,11 @@ class BondGraph : public Graph
 
         */ 
         bool operator==(const BondGraph & );
+        /*! \param Determines if one graph is a subgraph of another, and if so, in how many ways
+        \param Other A reference to the bond-based graph which may be a supergraph
+        \returns The number of ways to embed the graph in Other (0 if the graph is not a subgraph of Other)
+        */
+        int Embeddings(const BondGraph & );
         /*! \brief Assigns the value of one BondGraph to another
         \param Other A reference to the bond-based graph which is being copied
         \returns A reference to a new bond-based graph, which is a copy of the referenced graph
